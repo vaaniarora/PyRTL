@@ -15,11 +15,15 @@ for an overview of distributing Python packages with GitHub Actions. PyRTL's
 PyRTL uses [semantic versioning](https://semver.org/). All version numbers are
 of the form `MAJOR.MINOR.PATCH`, with an optional `rcN` suffix for release
 candidates, starting from `rc0`. Valid examples include `0.11.1` and
-`0.11.0rc0`.
+`0.11.0rc0`. Never reuse a version number.
 
-Use `rc` release candidates for pre-releases, and to test the release process.
-`pip` will not install release candidates by default. Use `pip install --pre
-pyrtl` to install the latest release candidate.
+Releases with a `rc` suffix are Release Candidates. Use release candidates for
+pre-releases, and to test the release process. `pip` will not install release
+candidates by default. Use:
+```shell
+$ pip install --pre pyrtl
+```
+to install the latest release candidate.
 
 The rest of this document assumes that the new PyRTL version number is
 `$NEW_VERSION`.
@@ -27,25 +31,72 @@ The rest of this document assumes that the new PyRTL version number is
 See [PEP 440](https://peps.python.org/pep-0440/) for more details on version
 numbers.
 
-## Update version numbers
+## Building a new release
 
-1. Clone the PyRTL repository: `git clone git@github.com:UCSBarchlab/PyRTL.git`
-1. Edit `pyproject.toml` by updating the `version =` line to `version =
+1. Clone the PyRTL repository:
+   ```shell
+   $ git clone git@github.com:UCSBarchlab/PyRTL.git pyrtl
+   $ cd pyrtl
+   ```
+2. Edit `pyproject.toml` by updating the `version =` line to `version =
    "$NEW_VERSION"`
-2. Commit this change: `git commit pyproject.toml`
-3. Tag the new version with `git tag $NEW_VERSION`
-4. Push this change to GitHub. Tags are not pushed by default, so use: `git push
-   origin $NEW_VERSION`
+3. Commit this change:
+   ```shell
+   $ git commit pyproject.toml
+   ```
+4. Tag the new version:
+   ```shell
+   $ git tag $NEW_VERSION
+   ```
+5. Push this change to GitHub. Tags are not pushed by default, so use:
+   ```shell
+   $ git push origin $NEW_VERSION
+   ```
 
 The `python-release.yml` GitHub workflow should detect the new tag, build a new
-release, and upload the new release to TestPyPI.
+release, and upload the new release to TestPyPI. Check workflow status at
+https://github.com/UCSBarchlab/PyRTL/actions
+
+### Testing a new TestPyPI release
+
+Test this TestPyPI release by creating a new Python virtual environment
+(`venv`):
+```shell
+$ python3 -m venv pyrtl-release-test
+$ . pyrtl-release-test/bin/activate
+```
+
+Then install and test the new release from TestPyPI:
+```shell
+$ pip install --index-url https://test.pypi.org/simple/ --no-deps pyrtl
+```
+If you created a `rc` release candidate, don't forget to add the `--pre` flag:
+```shell
+$ pip install --index-url https://test.pypi.org/simple/ --no-deps --pre pyrtl
+```
+
+### Deploying a new PyPI release
+
+If the new release looks good, approve the 'Publish distribution archives on
+PyPI' workflow on GitHub to deploy the new release to PyPI.
+
+### Testing a new PyPI release
+
+Test this PyPI release by installing and testing the new release from PyPI:
+```shell
+$ pip install pyrtl
+```
+If you created a `rc` release candidate, don't forget to add the `--pre` flag:
+```shell
+$ pip install --pre pyrtl
+```
 
 The following manual steps should be automated by
 `.github/workflows/python-release.yml`. Manual release instructions are
 provided below in case a release needs to be built without GitHub workflow
 automation.
 
-## Building and publishing a new release manually
+## Manually building and publishing a new release
 
 These manual steps should be automated by
 `.github/workflows/python-release.yml`. If the automation is working, you
@@ -53,29 +104,44 @@ shouldn't need to run these commands.
 
 ### Manual build
 
-1. Update build tools: `pip install  --upgrade -r release/requirements.txt`
-2. Build distribution archive: `python3 -m build`. This produces two files in
-   `dist/`: a `.whl` file and a `.tar.gz` file.
+1. Update build tools:
+   ```shell
+   $ pip install  --upgrade -r release/requirements.txt
+   ```
+2. Build distribution archive:
+   ```shell
+   $ python3 -m build
+   ```
+   This produces two files in `dist/`: a `.whl` file and a `.tar.gz` file.
 
 ### Manual publish on TestPyPI
 
-1. If necessary, create a TestPyPI API token: Go to
-   https://test.pypi.org/manage/account/ and click 'Add API token'.
-2. Upload distribution archive to TestPyPI: `twine upload --repository testpypi
-   dist/*` and enter your API token when prompted.
-3. Check the new release's status at https://test.pypi.org/project/pyrtl/#history
-4. Create a new virtual environment, then install and test the new release from
-   TestPyPI: `pip install --index-url https://test.pypi.org/simple/ --no-deps
-   pyrtl` . If you created a `rc` release candidate, add the `--pre` flag.
+1. If necessary, create a TestPyPI API token, by going to
+   https://test.pypi.org/manage/account/ and clicking 'Add API token'.
+2. Upload distribution archive to TestPyPI:
+   ```shell
+   $ twine upload --repository testpypi dist/*
+   ```
+3. Enter your API token when prompted.
+4. Check the new release's status at https://test.pypi.org/project/pyrtl/#history
+5. Install and test the new release from TestPyPI by following the [Testing a
+   new TestPyPI release](#testing-a-new-testpypi-release) instructions above.
 
 ### Manual publish on PyPI
 
 > :warning: The next steps update the official PyRTL release on PyPI, which
 > affects anyone running `pip install pyrtl`. Proceed with caution!
 
-1. Upload distribution archive to PyPI: `twine upload dist/*`
-2. Check the new release's status at https://pypi.org/project/pyrtl/
-3. Install and test the new release from PyPI: `pip install pyrtl`
+1. If necessary, create a PyPI API token, by going to
+   https://pypi.org/manage/account/ and clicking 'Add API token'.
+2. Upload distribution archive to PyPI:
+   ```shell
+   $ twine upload dist/*
+   ```
+3. Enter your API token when prompted.
+4. Check the new release's status at https://pypi.org/project/pyrtl/#history
+5. Install and test the new release from PyPI by following the [Testing a new
+   PyPI release](#testing-a-new-pypi-release) instructions above.
 
 ## Fixing Mistakes
 
@@ -88,14 +154,14 @@ release.
 
 If the new release is unusable, [yank the
 release](https://pypi.org/help/#yanked). This can be done by a project owner on
-PyPI, by clicking on 'Manage project' then 'Options', then Yank'. When a
-release is yanked, it remains available to anyone requesting exactly the yanked
+PyPI, by clicking 'Manage project' then 'Options', then Yank'. When a release
+is yanked, it remains available to anyone requesting exactly the yanked
 version, so a project with a pinned requirement on PyRTL won't break. A yanked
 version will not be installed in any other case, so a user running `pip install
-pyrtl` will not receive a yanked version.
+pyrtl` will never receive a yanked version.
 
 ### Publishing A Fixed Release
 
 Fix the problem in the code, then publish a new release with a new version
-number by following the instructions above. Do not attempt to reuse an old
+number by following the instructions above. Do not attempt to reuse an existing
 version number.
