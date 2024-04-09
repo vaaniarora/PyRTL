@@ -21,10 +21,6 @@ project = 'PyRTL'
 copyright = '2023, Timothy Sherwood'
 author = 'Timothy Sherwood'
 
-# The full version, including alpha/beta/rc tags
-release = '0.10.2'
-
-
 # -- General configuration ---------------------------------------------------
 
 master_doc = 'index'
