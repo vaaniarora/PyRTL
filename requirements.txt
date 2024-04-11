@@ -1,5 +1,4 @@
-astroid
-pep8
+pycodestyle
 pylint
 pyparsing
 pytest

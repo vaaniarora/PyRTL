@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - name: Install pypa/build
@@ -28,10 +28,11 @@ jobs:
     - name: Build distribution archives
       run: python3 -m build
     - name: Upload distribution archives
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-distribution-archives
         path: dist/
+        compression-level: 0
 
   # Publish distribution archive to TestPyPI on tag pushes.
   publish-to-testpypi:
