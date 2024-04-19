@@ -170,17 +170,12 @@ def signed_tree_multiplier(A, B, reducer=adders.wallace_reducer, adder_func=adde
     return _twos_comp_conditional(res, aneg ^ bneg)
 
 
-def _twos_comp_conditional(orig_wire, sign_bit, bw=None):
-    """Returns two's complement of wire (using bitwidth bw) if sign_bit == 1"""
-    if bw is None:
-        bw = len(orig_wire)
-    new_wire = pyrtl.WireVector(bw)
-    with pyrtl.conditional_assignment:
-        with sign_bit:
-            new_wire |= ~orig_wire + 1
-        with pyrtl.otherwise:
-            new_wire |= orig_wire
-    return new_wire
+def _twos_comp_conditional(orig_wire: pyrtl.WireVector,
+                           sign_bit: pyrtl.WireVector) -> pyrtl.WireVector:
+    """Returns two's complement of ``orig_wire`` if ``sign_bit`` == 1"""
+    return pyrtl.select(sign_bit,
+                        (~orig_wire + 1).truncate(len(orig_wire)),
+                        orig_wire)
 
 
 def fused_multiply_adder(mult_A, mult_B, add, signed=False, reducer=adders.wallace_reducer,

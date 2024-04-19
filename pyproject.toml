@@ -37,7 +37,10 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+# Required by `input_from_blif`.
 blif = ["pyparsing"]
+# Required by `block_to_svg`.
+svg = ["graphviz"]
 
 [project.urls]
 Homepage = "http://ucsbarchlab.github.io/PyRTL/"

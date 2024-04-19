@@ -254,6 +254,22 @@ class RenderTraceCustomBase(unittest.TestCase):
         )
         self.assertEqual(buff.getvalue(), expected)
 
+    def test_val_to_signed_integer(self):
+        bitwidth = 2
+        counter = pyrtl.Register(name='counter', bitwidth=bitwidth)
+        counter.next <<= counter + 1
+        sim = pyrtl.Simulation()
+        sim.step_multiple(nsteps=2 ** bitwidth)
+        buff = io.StringIO()
+        sim.tracer.render_trace(file=buff, renderer=self.renderer,
+                                repr_func=pyrtl.val_to_signed_integer)
+        expected = (
+            "       |0 |1 |2 |3 \n"
+            "        \n"
+            "counter --|1 |-2|-1\n"
+        )
+        self.assertEqual(buff.getvalue(), expected)
+
     def test_custom_repr_per_wire(self):
         class Foo(enum.IntEnum):
             A = 0

@@ -13,8 +13,12 @@ PyRTL's documentation is in this `docs` directory. It is built with
 The main Sphinx configuration file is
 [`docs/conf.py`](https://github.com/UCSBarchlab/PyRTL/blob/development/docs/conf.py).
 
-Most of PyRTL's documentation is automatically extracted from Python docstrings, see
-[docstring formating](https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#signatures) for supported directives and fields.
+Most of PyRTL's documentation is automatically extracted from Python
+docstrings, see [docstring
+formating](https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#signatures)
+for supported directives and fields. Sphinx parses [Python type
+annotations](https://docs.python.org/3/library/typing.html), so put type
+information into annotations instead of docstrings.
 
 Follow the instructions on this page to build a local copy of PyRTL's
 documentation. This is useful for verifying that PyRTL's documentation still
@@ -42,7 +46,7 @@ repository root:
 
 ```shell
 # Install Sphinx.
-$ pip install -r docs/requirements.txt
+$ pip install --upgrade -r docs/requirements.txt
 ```
 
 ## Installing Graphviz

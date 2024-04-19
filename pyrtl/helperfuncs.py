@@ -519,19 +519,36 @@ def wirevector_list(names, bitwidth=None, wvtype=WireVector):
     return wirelist
 
 
-def val_to_signed_integer(value, bitwidth):
-    """ Return value as intrepreted as a signed integer under two's complement.
+def val_to_signed_integer(value: int, bitwidth: int) -> int:
+    """Return value as intrepreted as a signed integer under two's complement.
 
-    :param int value: a Python integer holding the value to convert
-    :param int bitwidth: the length of the integer in bits to assume for conversion
-    :return: `value` as a signed integer
-    :rtype: int
+    :param value: A Python integer holding the value to convert.
+    :param bitwidth: The length of the integer in bits to assume for
+                     conversion.
+    :return: ``value`` as a signed integer
 
-    Given an unsigned integer (not a WireVector!) convert that to a signed
+    Given an unsigned integer (not a ``WireVector``!) convert that to a signed
     integer.  This is useful for printing and interpreting values which are
     negative numbers in two's complement. ::
 
         val_to_signed_integer(0xff, 8) == -1
+
+    ``val_to_signed_integer`` can also be used as an ``repr_func`` for
+    :py:meth:`.SimulationTrace.render_trace`, to display signed integers in
+    traces::
+
+        bitwidth = 3
+        counter = Register(name='counter', bitwidth=bitwidth)
+        counter.next <<= counter + 1
+        sim = Simulation()
+        sim.step_multiple(nsteps=2 ** bitwidth)
+
+        # Generates a trace like:
+        #        │0 │1 │2 │3 │4 │5 │6 │7
+        #
+        # counter ──┤1 │2 │3 │-4│-3│-2│-1
+        sim.tracer.render_trace(repr_func=val_to_signed_integer)
+
     """
     if isinstance(value, WireVector) or isinstance(bitwidth, WireVector):
         raise PyrtlError('inputs must not be wirevectors')

@@ -1,5 +1,7 @@
 """Classes for executing and tracing circuit simulations."""
 
+from __future__ import annotations
+
 import copy
 import math
 import numbers
@@ -13,6 +15,7 @@ from .core import working_block, PostSynthBlock, _PythonSanitizer
 from .wire import Input, Register, Const, Output, WireVector
 from .memory import RomBlock
 from .helperfuncs import check_rtl_assertions, _currently_in_jupyter_notebook
+from .helperfuncs import val_to_signed_integer
 from .importexport import _VerilogSanitizer
 
 try:
@@ -63,7 +66,7 @@ class Simulation(object):
 
     simple_func = {  # OPS
         'w': lambda x: x,
-        '~': lambda x: ~x,
+        '~': lambda x: ~int(x),
         '&': lambda left, right: left & right,
         '|': lambda left, right: left | right,
         '^': lambda left, right: left ^ right,
@@ -1026,11 +1029,12 @@ class WaveRenderer(object):
         ticks = major_tick.ljust(cycle_len * segment_size)
         return ticks
 
-    def val_to_str(self, value, wire_name, repr_func, repr_per_name):
+    def val_to_str(self, value: int, wire: WireVector,
+                   repr_func: typing.Callable, repr_per_name: dict) -> str:
         """Return a string representing 'value'.
 
         :param value: The value to convert to string.
-        :param wire_name: Name of the wire that produced this value.
+        :param wire: Wire that produced this value.
         :param repr_func: function to use for representing the current_val;
             examples are 'hex', 'oct', 'bin', 'str' (for decimal), or
             the function returned by :py:func:`enum_name`. Defaults to 'hex'.
@@ -1041,11 +1045,18 @@ class WaveRenderer(object):
         :return: a string representing 'value'.
 
         """
-        f = repr_per_name.get(wire_name)
+        f = repr_per_name.get(wire.name)
+
+        def invoke_f(f, value):
+            if f is val_to_signed_integer:
+                return str(val_to_signed_integer(value=value,
+                                                 bitwidth=wire.bitwidth))
+            else:
+                return str(f(value))
         if f is not None:
-            return str(f(value))
+            return invoke_f(f, value)
         else:
-            return str(repr_func(value))
+            return invoke_f(repr_func, value)
 
     def render_val(self, w, prior_val, current_val, symbol_len, cycle_len,
                    repr_func, repr_per_name, prev_line, is_last):
@@ -1081,7 +1092,8 @@ class WaveRenderer(object):
             flat_zero = (w.name not in repr_per_name
                          and (repr_func is hex or repr_func is oct
                               or repr_func is int or repr_func is str
-                              or repr_func is bin))
+                              or repr_func is bin
+                              or repr_func is val_to_signed_integer))
             if prev_line:
                 # Bus wires are currently never rendered across multiple lines.
                 return ''
@@ -1105,7 +1117,7 @@ class WaveRenderer(object):
                     if prior_val is None:
                         out += self.constants._bus_start
                     # Display the current non-zero value.
-                    out += (self.val_to_str(current_val, w.name, repr_func,
+                    out += (self.val_to_str(current_val, w, repr_func,
                                             repr_per_name).rstrip('L')
                             .ljust(symbol_len)[:symbol_len])
                     if is_last:
@@ -1591,28 +1603,36 @@ class SimulationTrace(object):
         file.flush()
 
     def render_trace(
-            self, trace_list=None, file=sys.stdout, renderer=default_renderer(),
-            symbol_len=None, repr_func=hex, repr_per_name={}, segment_size=1):
+            self, trace_list: list[str] = None, file=sys.stdout,
+            renderer: WaveRenderer = default_renderer(), symbol_len: int = None,
+            repr_func: typing.Callable = hex, repr_per_name: dict = {},
+            segment_size: int = 1):
 
-        """ Render the trace to a file using unicode and ASCII escape sequences.
+        """Render the trace to a file using unicode and ASCII escape sequences.
 
-        :param list[str] trace_list: A list of signal names to be output in the specified order.
+        :param trace_list: A list of signal names to be output in the specified
+            order.
         :param file: The place to write output, default to stdout.
-        :param WaveRenderer renderer: An object that translates traces into output bytes.
-        :param int symbol_len: The "length" of each rendered value in characters.
-            If None, the length will be automatically set such that the largest
-            represented value fits.
-        :param repr_func: Function to use for representing each value in the trace;
-            examples are ``hex``, ``oct``, ``bin``, and ``str`` (for decimal), or
-            the function returned by :py:func:`enum_name`. Defaults to 'hex'.
-        :param repr_per_name: Map from signal name to a function that takes in the signal's
-            value and returns a user-defined representation. If a signal name is
-            not found in the map, the argument `repr_func` will be used instead.
-        :param int segment_size: Traces are broken in the segments of this number of cycles.
+        :param renderer: An object that translates traces into output bytes.
+        :param symbol_len: The "length" of each rendered value in characters.
+            If ``None``, the length will be automatically set such that the
+            largest represented value fits.
+        :param repr_func: Function to use for representing each value in the
+            trace. Examples include ``hex``, ``oct``, ``bin``, and ``str`` (for
+            decimal), :py:func:`.val_to_signed_integer` (for signed decimal) or
+            the function returned by :py:func:`enum_name` (for ``IntEnum``).
+            Defaults to ``hex``.
+        :param repr_per_name: Map from signal name to a function that takes in
+            the signal's value and returns a user-defined representation. If a
+            signal name is not found in the map, the argument ``repr_func``
+            will be used instead.
+        :param segment_size: Traces are broken in the segments of this number
+            of cycles.
 
         The resulting output can be viewed directly on the terminal or looked
-        at with :program:`more` or :program:`less -R` which both should handle the ASCII escape
-        sequences used in rendering.
+        at with :program:`more` or :program:`less -R` which both should handle
+        the ASCII escape sequences used in rendering.
+
         """
         if _currently_in_jupyter_notebook():
             from IPython.display import display, HTML, Javascript  # pylint: disable=import-error
@@ -1693,12 +1713,15 @@ class SimulationTrace(object):
                 "if a CompiledSimulation was used.")
 
         if symbol_len is None:
-            maxvallen = 0
+            max_symbol_len = 0
             for trace_name in trace_list:
                 trace = self.trace[trace_name]
-                maxvallen = max(maxvallen, max(len(renderer.val_to_str(
-                    v, trace_name, repr_func, repr_per_name)) for v in trace))
-            symbol_len = maxvallen
+                current_symbol_len = max(
+                    len(renderer.val_to_str(
+                        v, self._wires[trace_name], repr_func, repr_per_name))
+                    for v in trace)
+                max_symbol_len = max(max_symbol_len, current_symbol_len)
+            symbol_len = max_symbol_len
 
         cycle_len = symbol_len + renderer.constants._chars_between_cycles
 
