@@ -14,7 +14,6 @@ on: push
 jobs:
   # Verify that distribution archives can be built on every push.
   build:
-    name: Build and upload distribution archives
     runs-on: ubuntu-latest
 
     steps:
@@ -35,8 +34,7 @@ jobs:
         compression-level: 0
 
   # Publish distribution archive to TestPyPI on tag pushes.
-  publish-to-testpypi:
-    name: Publish distribution archives on TestPyPI
+  publish-testpypi:
     # Only publish to TestPyPI on tag pushes.
     if: startsWith(github.ref, 'refs/tags/')
     needs:
@@ -62,8 +60,7 @@ jobs:
 
   # Publish distribution archive to PyPI on tag pushes. The 'pypi' environment
   # requires manual approval on GitHub, so this job won't start automatically.
-  publish-to-pypi:
-    name: Publish distribution archives on PyPI
+  publish-pypi:
     # Only publish to PyPI on tag pushes.
     if: startsWith(github.ref, 'refs/tags/')
     needs:

@@ -38,17 +38,11 @@ numbers.
    $ git clone git@github.com:UCSBarchlab/PyRTL.git pyrtl
    $ cd pyrtl
    ```
-2. Edit `pyproject.toml` by updating the `version =` line to `version =
-   "$NEW_VERSION"`
-3. Commit this change:
-   ```shell
-   $ git commit pyproject.toml
-   ```
-4. Tag the new version:
+2. Tag the new version:
    ```shell
    $ git tag $NEW_VERSION
    ```
-5. Push this change to GitHub. Tags are not pushed by default, so use:
+3. Push this change to GitHub. Tags are not pushed by default, so use:
    ```shell
    $ git push origin $NEW_VERSION
    ```

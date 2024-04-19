@@ -3,16 +3,18 @@
 # This file configures PyRTL's distribution archives, which are built and
 # uploaded to PyPI with GitHub actions.
 #
-# This configuration is based on the "Packaging Python Projects" tutorial at
+# This configuration is roughly based on the "Packaging Python Projects"
+# tutorial at
 # https://packaging.python.org/en/latest/tutorials/packaging-projects/
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "pyrtl"
-version = "0.11.0rc1"
+# hatch-vcs determines the version number from the latest git tag.
+dynamic = ["version"]
 authors = [
   {name="Timothy Sherwood", email="sherwood@cs.ucsb.edu"},
   {name="John Clow"},
@@ -46,3 +48,6 @@ svg = ["graphviz"]
 Homepage = "http://ucsbarchlab.github.io/PyRTL/"
 GitHub = "https://github.com/UCSBarchlab/PyRTL"
 Documentation = "https://pyrtl.readthedocs.io/"
+
+[tool.hatch.version]
+source = "vcs"
