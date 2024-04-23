@@ -1,3 +1,6 @@
+<!-- This README is also published on PyPI. GitHub relative links, like
+[link](docs/README.md) do not work on PyPI, so don't use them here. -->
+
 PyRTL
 =====
 
@@ -7,7 +10,7 @@ PyRTL
 [![Documentation Status](https://readthedocs.org/projects/pyrtl/badge/?version=latest)](http://pyrtl.readthedocs.org/en/latest/?badge=latest)
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/UCSBarchlab/PyRTL/development?filepath=%2Fipynb-examples%2F)
 
-PyRTL provides a collection of classes for pythonic [register-transfer
+PyRTL provides a collection of classes for Pythonic [register-transfer
 level](https://en.wikipedia.org/wiki/Register-transfer_level) design,
 simulation, tracing, and testing suitable for teaching and research.
 Simplicity, usability, clarity, and extensibility rather than performance or
@@ -30,7 +33,7 @@ What README would be complete without a screenshot? Below you can see the
 waveform rendered right on the terminal for a small state machine written in
 PyRTL.
 
-![Command-line waveform for PyRTL state machine]( docs/screenshots/pyrtl-statemachine.png?raw=true "PyRTL State Machine Screenshot")
+![Command-line waveform for PyRTL state machine](https://github.com/UCSBarchlab/PyRTL/blob/development/docs/screenshots/pyrtl-statemachine.png?raw=true "PyRTL State Machine Screenshot")
 
 ### Tutorials and Documentation
 
@@ -44,7 +47,7 @@ PyRTL.
 ### Package Contents
 
 If you are just getting started with PyRTL it is suggested that you start with
-the `examples` first to get a sense of the "thinking with PyRTLs" required to
+the `examples/` first to get a sense of the "thinking with PyRTLs" required to
 design hardware in this way. If you are looking for a deeper understanding,
 dive into the code for the object `Block`. It is the core data structure at the
 heart of PyRTL and defines its semantics at a high level -- everything is
@@ -71,7 +74,7 @@ and nothing more.
   [uncovered lines of code in
   PyRTL](https://codecov.io/github/UCSBarchlab/PyRTL?branch=development). For
   example, pick a `PyrtlError` that is not covered and add a unit test in
-  `/tests` that will hit it.
+  `tests/` that will hit it.
 * After you have that down check in the [PyRTL
   Issues](https://github.com/UCSBarchlab/PyRTL/issues) list for a feature that
   is marked as "beginner friendly".
@@ -94,7 +97,7 @@ and nothing more.
   tutorial](https://www.atlassian.com/git/tutorials/)
 * A useful Git Fork workflow for working on this repo is [found
   here](http://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/)
-* The "development" branch is the primary stable working branch (everyone is
+* The `development` branch is the primary stable working branch (everyone is
   invited to submit pull requests)
 * Bugs and minor enhancements tracked directly through the [issue
   tracker](https://github.com/UCSBarchlab/PyRTL/issues)
@@ -137,9 +140,9 @@ and nothing more.
 * The Sphinx-generated documentation is published to
   https://pyrtl.readthedocs.io/
 * PyRTL's Sphinx build process is documented in
-  [`docs/README.md`](docs/README.md).
+  [`docs/README.md`](https://github.com/UCSBarchlab/PyRTL/blob/development/docs/README.md).
 * PyRTL's release process is documented in
-  [`release/README.md`](release/README.md).
+  [`release/README.md`](https://github.com/UCSBarchlab/PyRTL/blob/development/release/README.md).
 
 ### Using PyRTL
 

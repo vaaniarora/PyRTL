@@ -53,6 +53,10 @@ https://github.com/UCSBarchlab/PyRTL/actions
 
 ### Testing a new TestPyPI release
 
+Check the [TestPyPI release
+history](https://test.pypi.org/project/pyrtl/#history). You should see your
+`$NEW_VERSION` at the top of the page.
+
 Test this TestPyPI release by creating a new Python virtual environment
 (`venv`):
 ```shell
@@ -76,6 +80,9 @@ PyPI' workflow on GitHub to deploy the new release to PyPI.
 
 ### Testing a new PyPI release
 
+Check the [PyPI release history](https://pypi.org/project/pyrtl/#history). You
+should see your `$NEW_VERSION` at the top of the page.
+
 Test this PyPI release by installing and testing the new release from PyPI:
 ```shell
 $ pip install pyrtl
@@ -85,16 +92,35 @@ If you created a `rc` release candidate, don't forget to add the `--pre` flag:
 $ pip install --pre pyrtl
 ```
 
-The following manual steps should be automated by
-`.github/workflows/python-release.yml`. Manual release instructions are
-provided below in case a release needs to be built without GitHub workflow
-automation.
+## Read the Docs Versioning
+
+Read the Docs builds documentation for each PyRTL release. Available versions
+can be seen on [PyRTL's
+dashboard](https://readthedocs.org/projects/pyrtl/versions/), or in the bottom
+right [flyout
+menu](https://docs.readthedocs.io/en/stable/glossary.html#term-flyout-menu) on
+each documentation page.
+
+After building a new release, check the new release's documentation on [PyRTL's
+Read the Docs dashboard](https://readthedocs.org/projects/pyrtl/versions/).
+
+Versioned documentation builds are triggered by the creation of git tags, and
+versions for new releases are automatically activated by the Read the Docs
+"Activate new version" [automation
+rule](https://docs.readthedocs.io/en/stable/automation-rules.html). The "Hide
+release candidates" automation rule hides release candidates from the bottom
+right flyout menu.
+
+After a full release (not a release candidate), deactivate the documentation
+for any corresponding release candidates on the dashboard.
 
 ## Manually building and publishing a new release
 
-These manual steps should be automated by
-`.github/workflows/python-release.yml`. If the automation is working, you
-shouldn't need to run these commands.
+The following manual steps should be automated by
+`.github/workflows/python-release.yml`. Manual release instructions are
+provided below in case a release needs to be built without GitHub workflow
+automation. If the automation is working, you shouldn't need to run these
+commands.
 
 ### Manual build
 
