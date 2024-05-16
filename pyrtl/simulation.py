@@ -914,7 +914,8 @@ class FastSimulation(object):
             else:
                 return '(%s %s %d)' % (value, direction, shift_amt)
 
-        def make_split():
+        def make_split(
+                source, split_length, split_start_bit, split_res_start_bit):
             if split_start_bit == 0:
                 bit = '(%d & %s)' % ((1 << split_length) - 1, source)
             elif len(net.args[0]) - split_start_bit == split_length:
@@ -945,13 +946,16 @@ class FastSimulation(object):
                     if b != split_start_bit + split_length:
                         if split_start_bit >= 0:
                             # create a wire
-                            expr += make_split() + '|'
+                            expr += make_split(
+                                source, split_length, split_start_bit,
+                                split_res_start_bit) + '|'
                         split_length = 1
                         split_start_bit = b
                         split_res_start_bit = i
                     else:
                         split_length += 1
-                expr += make_split()
+                expr += make_split(
+                    source, split_length, split_start_bit, split_res_start_bit)
             elif net.op == 'm':
                 read_addr = self._arg_varname(net.args[0])
                 mem = net.op_param[1]
