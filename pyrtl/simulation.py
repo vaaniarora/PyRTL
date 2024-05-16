@@ -11,9 +11,9 @@ import sys
 import typing
 
 from .pyrtlexceptions import PyrtlError, PyrtlInternalError
-from .core import working_block, PostSynthBlock, _PythonSanitizer
+from .core import working_block, PostSynthBlock, _PythonSanitizer, Block
 from .wire import Input, Register, Const, Output, WireVector
-from .memory import RomBlock
+from .memory import RomBlock, MemBlock
 from .helperfuncs import check_rtl_assertions, _currently_in_jupyter_notebook
 from .helperfuncs import val_to_signed_integer
 from .importexport import _VerilogSanitizer
@@ -36,13 +36,11 @@ class Simulation(object):
     A Simulation step works as follows:
 
     1. Registers are updated:
-
         1. (If this is the first step) With the default values passed in
            to the Simulation during instantiation and/or any reset values
            specified in the individual registers.
         2. (Otherwise) With their next values calculated in the previous step
            (``r`` logic nets).
-
     2. The new values of these registers as well as the values of block inputs
        are propagated through the combinational logic.
     3. Memory writes are performed (``@`` logic nets).
@@ -81,28 +79,29 @@ class Simulation(object):
     }
 
     def __init__(
-            self, tracer=True, register_value_map={}, memory_value_map={},
-            default_value=0, block=None):
+            self, tracer: SimulationTrace = True,
+            register_value_map: dict[Register, int] = {},
+            memory_value_map: dict[MemBlock, dict[int, int]] = {},
+            default_value: int = 0, block: Block = None):
         """Creates a new circuit simulator.
 
-        :param SimulationTrace tracer: Stores execution results.  Defaults to a
-            new :class:`.SimulationTrace` with no params passed to it.  If None
-            is passed, no tracer is instantiated (which is good for long
-            running simulations).  If the default (true) is passed, Simulation
-            will create a new tracer automatically which can be referenced by
-            the member variable ``.tracer``
-        :param dict[Register, int] register_value_map: Defines the initial
-            value for the registers specified; overrides the registers's
+        :param tracer: Stores execution results. If ``None`` is passed, no
+            tracer is instantiated, which improves performance for long running
+            simulations). If the default (``True``) is passed, Simulation will
+            create a new :class:`.SimulationTrace` automatically which can be
+            referenced by the member variable ``.tracer``
+        :param register_value_map: Defines the initial
+            value for the registers specified; overrides the register's
             ``reset_value``.
-        :param memory_value_map: Defines initial values for many
-            addresses in a single or multiple memory. Format: {Memory: {address: Value}}.
-            Memory is a memory block, address is the address of a value
-        :param int default_value: The value that all unspecified registers and
+        :param memory_value_map: Defines initial values for many addresses in a
+            single or multiple memory. Format: ``{Memory: {address: Value}}``.
+            ``Memory`` is a memory block, address is the address of a value
+        :param default_value: The value that all unspecified registers and
             memories will initialize to (default 0). For registers, this is the
             value that will be used if the particular register doesn't have a
             specified ``reset_value``, and isn't found in the
             `register_value_map`.
-        :param Block block: the hardware block to be traced (which might be of
+        :param block: the hardware block to be traced (which might be of
             type :class:`.PostSynthBlock`).  Defaults to the working block
 
         Warning: Simulation initializes some things when called with
@@ -181,10 +180,12 @@ class Simulation(object):
         self.reg_update_nets = tuple((self.block.logic_subset('r')))
         self.mem_update_nets = tuple((self.block.logic_subset('@')))
 
-        self.tracer._set_initial_values(self.default_value, self.regvalue.copy(),
-                                        copy.deepcopy(self.memvalue))
+        if self.tracer is not None:
+            self.tracer._set_initial_values(
+                self.default_value, self.regvalue.copy(),
+                copy.deepcopy(self.memvalue))
 
-    def step(self, provided_inputs):
+    def step(self, provided_inputs: dict[str, int]):
         """Take the simulation forward one cycle.
 
         :param provided_inputs: a dictionary mapping WireVectors to their
@@ -266,8 +267,10 @@ class Simulation(object):
         # raise the appropriate exceptions
         check_rtl_assertions(self)
 
-    def step_multiple(self, provided_inputs={}, expected_outputs={}, nsteps=None,
-                      file=sys.stdout, stop_after_first_error=False):
+    def step_multiple(self, provided_inputs: dict[str, int] = {},
+                      expected_outputs: dict[str, int] = {},
+                      nsteps: int = None,
+                      file=sys.stdout, stop_after_first_error: bool = False):
         """Take the simulation forward N cycles, based on the number of values
         for each input
 
@@ -394,10 +397,10 @@ class Simulation(object):
                 file.write("{0:>5} {1:>10} {2:>8} {3:>8}\n".format(step, name, expected, actual))
             file.flush()
 
-    def inspect(self, w):
+    def inspect(self, w: str) -> int:
         """ Get the value of a WireVector in the last simulation cycle.
 
-        :param str w: the name of the WireVector to inspect
+        :param w: the name of the WireVector to inspect
             (passing in a WireVector instead of a name is deprecated)
         :return: value of w in the current step of simulation
 
@@ -410,7 +413,7 @@ class Simulation(object):
         wire = self.block.wirevector_by_name.get(w, w)
         return self.value[wire]
 
-    def inspect_mem(self, mem):
+    def inspect_mem(self, mem: MemBlock) -> dict[int, int]:
         """ Get the values in a map during the current simulation cycle.
 
         :param mem: the memory to inspect
@@ -497,13 +500,11 @@ class FastSimulation(object):
     A Simulation step works as follows:
 
     1. Registers are updated:
-
         1. (If this is the first step) With the default values passed in
            to the Simulation during instantiation and/or any reset values
            specified in the individual registers.
         2. (Otherwise) With their next values calculated in the previous step
            (``r`` logic nets).
-
     2. The new values of these registers as well as the values of block inputs
        are propagated through the combinational logic.
     3. Memory writes are performed (``@`` logic nets).
@@ -527,21 +528,26 @@ class FastSimulation(object):
     #  when put into the generated code
 
     def __init__(
-            self, register_value_map={}, memory_value_map={},
-            default_value=0, tracer=True, block=None, code_file=None):
-        """ Instantiates a Fast Simulation instance.
+            self, register_value_map: dict[Register, int] = {},
+            memory_value_map: dict = {},
+            default_value: int = 0, tracer: SimulationTrace = True,
+            block: Block = None, code_file=None):
+        """Instantiates a Fast Simulation instance.
 
-        The interface for FastSimulation and Simulation should be almost identical.
-        In addition to the Simulation arguments, FastSimulation additionally takes:
+        The interface for FastSimulation and :py:class:`Simulation` should be
+        almost identical. In addition to the :py:class:`Simulation` arguments,
+        FastSimulation additionally takes:
 
         :param code_file: The file in which to store a copy of the generated
             Python code. Defaults to no code being stored.
 
-        Look at :meth:`.Simulation.__init__` for descriptions for the other parameters.
+        Look at :meth:`.Simulation.__init__` for descriptions for the other
+        parameters.
 
-        This builds the Fast Simulation compiled Python code, so all changes
-        to the circuit after calling this function will not be reflected in
-        the simulation.
+        This builds the FastSimulation compiled Python code, so all changes to
+        the circuit after calling this function will not be reflected in the
+        simulation.
+
         """
 
         block = working_block(block)
@@ -578,8 +584,9 @@ class FastSimulation(object):
             with open(self.code_file, 'w') as file:
                 file.write(s)
 
-        self.tracer._set_initial_values(self.default_value, self.regs.copy(),
-                                        copy.deepcopy(self.mems))
+        if self.tracer is not None:
+            self.tracer._set_initial_values(
+                self.default_value, self.regs.copy(), copy.deepcopy(self.mems))
 
         context = {}
         logic_creator = compile(s, '<string>', 'exec')
@@ -601,7 +608,7 @@ class FastSimulation(object):
                 else:
                     self.mems[self._mem_varname(mem)] = {}
 
-    def step(self, provided_inputs):
+    def step(self, provided_inputs: dict[str, int]):
         """ Run the simulation for a cycle.
 
         :param provided_inputs: a dictionary mapping WireVectors (or their
@@ -645,8 +652,10 @@ class FastSimulation(object):
         # check the rtl assertions
         check_rtl_assertions(self)
 
-    def step_multiple(self, provided_inputs={}, expected_outputs={}, nsteps=None,
-                      file=sys.stdout, stop_after_first_error=False):
+    def step_multiple(self, provided_inputs: dict[str, int] = {},
+                      expected_outputs: dict[str, int] = {},
+                      nsteps: int = None, file=sys.stdout,
+                      stop_after_first_error: bool = False):
         """Take the simulation forward N cycles, where N is the number of
          values for each provided input.
 
@@ -782,10 +791,10 @@ class FastSimulation(object):
                 file.write("{0:>5} {1:>10} {2:>8} {3:>8}\n".format(step, name, expected, actual))
             file.flush()
 
-    def inspect(self, w):
+    def inspect(self, w: str) -> int:
         """ Get the value of a WireVector in the last simulation cycle.
 
-        :param str w: the name of the WireVector to inspect
+        :param w: the name of the WireVector to inspect
             (passing in a WireVector instead of a name is deprecated)
         :return: value of `w` in the current step of simulation
 
@@ -801,7 +810,7 @@ class FastSimulation(object):
         #                      "and measure the probe value to measure this wire's value"
         #                     .format(w))
 
-    def inspect_mem(self, mem):
+    def inspect_mem(self, mem: MemBlock) -> dict[int, int]:
         """ Get the values in a map during the current simulation cycle.
 
         :param mem: the memory to inspect
@@ -996,7 +1005,7 @@ class WaveRenderer(object):
     of :py:class:`RendererConstants`.
 
     """
-    def __init__(self, constants):
+    def __init__(self, constants: RendererConstants):
         """Instantiate a WaveRenderer.
 
         :param constants: Subclass of :py:class:`RendererConstants` that
@@ -1006,7 +1015,8 @@ class WaveRenderer(object):
         """
         self.constants = constants
 
-    def render_ruler_segment(self, n, cycle_len, segment_size, maxtracelen):
+    def render_ruler_segment(self, n: int, cycle_len: int, segment_size: int,
+                             maxtracelen: int):
         """Render a major tick padded to segment_size.
 
         :param n: Cycle number for the major tick mark.
@@ -1029,8 +1039,10 @@ class WaveRenderer(object):
         ticks = major_tick.ljust(cycle_len * segment_size)
         return ticks
 
-    def val_to_str(self, value: int, wire: WireVector,
-                   repr_func: typing.Callable, repr_per_name: dict) -> str:
+    def val_to_str(
+            self, value: int, wire: WireVector,
+            repr_func: typing.Callable[[int], str],
+            repr_per_name: dict[str, typing.Callable[[int], str]]) -> str:
         """Return a string representing 'value'.
 
         :param value: The value to convert to string.
@@ -1058,12 +1070,15 @@ class WaveRenderer(object):
         else:
             return invoke_f(repr_func, value)
 
-    def render_val(self, w, prior_val, current_val, symbol_len, cycle_len,
-                   repr_func, repr_per_name, prev_line, is_last):
+    def render_val(
+            self, w: WireVector, prior_val: int, current_val: int,
+            symbol_len: int, cycle_len: int,
+            repr_func: typing.Callable[[int], str],
+            repr_per_name: dict[str, typing.Callable[[int], str]],
+            prev_line: bool, is_last: bool) -> str:
         """Return a string encoding the given value in a waveform.
 
         :param w: The WireVector we are rendering to a waveform
-        :param n: An integer from 0 to segment_len-1
         :param prior_val: Last value rendered. None if there was no last value.
         :param current_val: the value to be rendered
         :param symbol_len: Width of each value, in characters.
@@ -1077,6 +1092,7 @@ class WaveRenderer(object):
         :param prev_line: If True, render the gap between signals. If False,
             render the main signal. This is useful for rendering signals across
             two lines, see the _prev_line* fields in RendererConstants.
+        :param is_last: If True, current_val is in the last cycle.
 
         Returns a string of printed length symbol_len that will draw the
         representation of current_val.  The input prior_val is used to
@@ -1449,7 +1465,8 @@ class TraceStorage(Mapping):
 class SimulationTrace(object):
     """ Storage and presentation of simulation waveforms. """
 
-    def __init__(self, wires_to_track=None, block=None):
+    def __init__(self, wires_to_track: list[WireVector] = None,
+                 block: Block = None):
         """
         Creates a new Simulation Trace
 
@@ -1604,8 +1621,10 @@ class SimulationTrace(object):
 
     def render_trace(
             self, trace_list: list[str] = None, file=sys.stdout,
-            renderer: WaveRenderer = default_renderer(), symbol_len: int = None,
-            repr_func: typing.Callable = hex, repr_per_name: dict = {},
+            renderer: WaveRenderer = default_renderer(),
+            symbol_len: int = None,
+            repr_func: typing.Callable[[int], str] = hex,
+            repr_per_name: dict[str, typing.Callable[[int], str]] = {},
             segment_size: int = 1):
 
         """Render the trace to a file using unicode and ASCII escape sequences.

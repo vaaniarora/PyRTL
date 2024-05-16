@@ -1395,6 +1395,25 @@ class TraceErrorBase(unittest.TestCase):
             self.sim_trace.print_trace(base=4)
 
 
+class NoTracerBase(unittest.TestCase):
+    """Test simulation without a SimulationTrace."""
+    def setUp(self):
+        pyrtl.reset_working_block()
+
+    def test_no_tracer(self):
+        a_val = 1
+        b_val = 2
+        expected_c = a_val + b_val
+        a = pyrtl.Const(a_val, bitwidth=2)
+        b = pyrtl.Const(b_val, bitwidth=2)
+        c = pyrtl.Output(name='c', bitwidth=3)
+        c <<= a + b
+        sim = self.sim(tracer=None)
+        sim.step({})
+        actual_c = sim.inspect('c')
+        self.assertEqual(expected_c, actual_c)
+
+
 def make_unittests():
     """
     Generates separate unittests for each of the simulators
