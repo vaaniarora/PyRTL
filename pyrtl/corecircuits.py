@@ -162,32 +162,55 @@ def concat_list(wire_list):
     return concat(*reversed(wire_list))
 
 
-def signed_add(a, b):
+def _signed_input_to_wirevector(x):
+    """Convert int input to a signed Const, otherwise call `as_wires`."""
+    if isinstance(x, int):
+        return Const(x, signed=True)
+    return as_wires(x)
+
+
+def signed_add(a: WireVector, b: WireVector) -> WireVector:
     """Return a WireVector for result of signed addition.
 
-    :param WireVector a: a WireVector to serve as first input to addition
-    :param WireVector b: a WireVector to serve as second input to addition
+    :param a: a WireVector to serve as first input to addition
+    :param b: a WireVector to serve as second input to addition
+    :return: A WireVector representing the sum of ``a`` and ``b``, with
+             bitwidth ``max(a.bitwidth, b.bitwidth) + 1``.
 
-    Given WireVectors with length ``n`` and ``m``, the result of the
-    signed addition has length::
+    The inputs are sign extended to the result's bitwidth before adding.
 
-        max(n, m) + 1
-
-    The inputs are two's complement sign extended to the same length before
-    adding.  If an integer is passed to either `a` or `b`, it will be converted
-    automatically to a two's complement constant
+    If ``a`` or ``b`` are integers, they will be converted to
+    :py:class:`.Const`.
 
     """
-    if isinstance(a, int):
-        a = Const(a, signed=True)
-    if isinstance(b, int):
-        b = Const(b, signed=True)
-    a, b = match_bitwidth(as_wires(a), as_wires(b), signed=True)
-    result_len = len(a) + 1
-    ext_a = a.sign_extended(result_len)
-    ext_b = b.sign_extended(result_len)
-    # add and truncate to the correct length
-    return (ext_a + ext_b)[0:result_len]
+    a = _signed_input_to_wirevector(a)
+    b = _signed_input_to_wirevector(b)
+    result_bitwidth = max(a.bitwidth, b.bitwidth) + 1
+    a = a.sign_extended(result_bitwidth)
+    b = b.sign_extended(result_bitwidth)
+    return (a + b).truncate(result_bitwidth)
+
+
+def signed_sub(a: WireVector, b: WireVector) -> WireVector:
+    """Return a WireVector for result of signed subtraction.
+
+    :param a: a WireVector to serve as first input to subtraction
+    :param b: a WireVector to serve as second input to subtraction
+    :return: A WireVector representing the difference between ``a`` and ``b``,
+             with bitwidth ``max(a.bitwidth, b.bitwidth) + 1``.
+
+    The inputs are sign extended to the result's bitwidth before subtracting.
+
+    If ``a`` or ``b`` are integers, they will be converted to
+    :py:class:`.Const`.
+
+    """
+    a = _signed_input_to_wirevector(a)
+    b = _signed_input_to_wirevector(b)
+    result_bitwidth = max(a.bitwidth, b.bitwidth) + 1
+    a = a.sign_extended(result_bitwidth)
+    b = b.sign_extended(result_bitwidth)
+    return (a - b).truncate(result_bitwidth)
 
 
 def mult_signed(a, b):
@@ -195,28 +218,26 @@ def mult_signed(a, b):
     return signed_mult(a, b)
 
 
-def signed_mult(a, b):
+def signed_mult(a: WireVector, b: WireVector) -> WireVector:
     """ Return ``a * b`` where ``a`` and ``b`` are treated as signed values.
 
-    :param WireVector a: a wirevector to serve as first input to multiplication
-    :param WireVector b: a wirevector to serve as second input to multiplication
+    :param a: a wirevector to serve as first input to multiplication
+    :param b: a wirevector to serve as second input to multiplication
+    :return: A WireVector representing the product of ``a`` and ``b``, with
+             bitwidth ``a.bitwidth + b.bitwidth``.
 
-    If an integer is passed to either ``a`` or ``b``, it will be converted
-    automatically to a two's complement constant"""
-    # if an integer, convert to a two's complement constant
-    if isinstance(a, int):
-        a = Const(a, signed=True)
-    if isinstance(b, int):
-        b = Const(b, signed=True)
-    # if not a wirevector yet, use standard conversion method
-    a, b = as_wires(a), as_wires(b)
-    final_len = len(a) + len(b)
-    # sign extend both inputs to the final target length
-    a, b = a.sign_extended(final_len), b.sign_extended(final_len)
-    # the result is the multiplication of both, but truncated
-    # TODO: this may make estimates based on the multiplication overly
-    # pessimistic as half of the multiply result is thrown right away!
-    return (a * b)[0:final_len]
+    The inputs are sign extended to the result's bitwidth before multiplying.
+
+    If ``a`` or ``b`` are integers, they will be converted to
+    :py:class:`.Const`.
+
+    """
+    a = _signed_input_to_wirevector(a)
+    b = _signed_input_to_wirevector(b)
+    result_bitwidth = a.bitwidth + b.bitwidth
+    a = a.sign_extended(result_bitwidth)
+    b = b.sign_extended(result_bitwidth)
+    return (a * b).truncate(result_bitwidth)
 
 
 def signed_lt(a, b):

@@ -31,7 +31,8 @@ WireVector
 .. autoclass:: pyrtl.wire.WireVector
     :members:
     :special-members: __init__, __add__, __sub__, __mul__, __getitem___,
-                      __len__, __ilshift__
+                      __len__, __ilshift__, __and__, __or__, __xor__, __lt__,
+                      __le__, __eq__, __ne__, __gt__, __ge__, __len__
 
 Input Pins
 ----------

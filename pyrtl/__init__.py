@@ -58,6 +58,7 @@ from .corecircuits import enum_mux
 from .corecircuits import bitfield_update
 from .corecircuits import bitfield_update_set
 from .corecircuits import signed_add
+from .corecircuits import signed_sub
 from .corecircuits import signed_mult
 from .corecircuits import signed_lt
 from .corecircuits import signed_le

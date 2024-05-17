@@ -115,6 +115,3 @@ for cycle in range(15):
             or python_cout != sim_trace.trace['carry_out'][cycle]):
         print('This Example is Broken!!!')
         exit(1)
-
-# You made it to the end!
-exit(0)

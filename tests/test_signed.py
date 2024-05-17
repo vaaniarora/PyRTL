@@ -188,3 +188,64 @@ class TestSignedArithBasicOperations(unittest.TestCase):
     def test_basic_signed_mult_commutative(self):
         self.o <<= pyrtl.signed_mult(-2, self.r)
         self.check_trace('0  -2  -4  -6  -8  6  4  2')
+
+
+class TestSignedArithmeticExhaustive(unittest.TestCase):
+    """Exhaustively test all signed arithmetic with all bit patterns."""
+    def setUp(self):
+        pyrtl.reset_working_block()
+
+    def test_signed_add(self):
+        a = pyrtl.Input(bitwidth=3, name='a')
+        b = pyrtl.Input(bitwidth=4, name='b')
+        sum = pyrtl.signed_add(a, b)
+        self.assertEqual(sum.bitwidth, b.bitwidth + 1)
+        o = pyrtl.Output(bitwidth=sum.bitwidth, name='o')
+        o <<= sum
+
+        sim = pyrtl.Simulation()
+        for i in range(-(2 ** (a.bitwidth - 1)), 2 ** (a.bitwidth - 1)):
+            for j in range(-(2 ** (b.bitwidth - 1)), 2 ** (b.bitwidth - 1)):
+                sim.step({'a': i, 'b': j})
+                inspected_val = sim.inspect('o')
+                actual_val = pyrtl.val_to_signed_integer(
+                    inspected_val, bitwidth=sum.bitwidth)
+                self.assertEqual(actual_val, i + j)
+
+    def test_signed_sub(self):
+        a = pyrtl.Input(bitwidth=3, name='a')
+        b = pyrtl.Input(bitwidth=4, name='b')
+        diff = pyrtl.signed_sub(a, b)
+        self.assertEqual(diff.bitwidth, b.bitwidth + 1)
+        o = pyrtl.Output(bitwidth=diff.bitwidth, name='o')
+        o <<= diff
+
+        sim = pyrtl.Simulation()
+        for i in range(-(2 ** (a.bitwidth - 1)), 2 ** (a.bitwidth - 1)):
+            for j in range(-(2 ** (b.bitwidth - 1)), 2 ** (b.bitwidth - 1)):
+                sim.step({'a': i, 'b': j})
+                inspected_val = sim.inspect('o')
+                actual_val = pyrtl.val_to_signed_integer(
+                    inspected_val, bitwidth=diff.bitwidth)
+                self.assertEqual(actual_val, i - j)
+
+    def test_signed_mult(self):
+        a = pyrtl.Input(bitwidth=3, name='a')
+        b = pyrtl.Input(bitwidth=4, name='b')
+        product = pyrtl.signed_mult(a, b)
+        self.assertEqual(product.bitwidth, a.bitwidth + b.bitwidth)
+        o = pyrtl.Output(bitwidth=product.bitwidth, name='o')
+        o <<= product
+
+        sim = pyrtl.Simulation()
+        for i in range(-(2 ** (a.bitwidth - 1)), 2 ** (a.bitwidth - 1)):
+            for j in range(-(2 ** (b.bitwidth - 1)), 2 ** (b.bitwidth - 1)):
+                sim.step({'a': i, 'b': j})
+                inspected_val = sim.inspect('o')
+                actual_val = pyrtl.val_to_signed_integer(
+                    inspected_val, bitwidth=product.bitwidth)
+                self.assertEqual(actual_val, i * j)
+
+
+if __name__ == "__main__":
+    unittest.main()

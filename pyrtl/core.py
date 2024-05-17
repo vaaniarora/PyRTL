@@ -39,61 +39,96 @@ class LogicNet(collections.namedtuple('LogicNet', ['op', 'op_param', 'args', 'de
 
     Logical Operations:
 
-    ===== ======== ======== ====== ====
-    op    op_param args     dests
-    ===== ======== ======== ====== ====
-    ``&`` `None`   `a1, a2` `out`  AND two wires together, put result into `out`
-    ``|`` `None`   `a1, a2` `out`  OR two wires together, put result into `out`
-    ``^`` `None`   `a1, a2` `out`  XOR two wires together, put result into `out`
-    ``n`` `None`   `a1, a2` `out`  NAND two wires together, put result into `out`
-    ``~`` `None`   `a1`     `out`  invert one wire, put result into `out`
-    ``+`` `None`   `a1, a2` `out`  add `a1` and `a2`, put result into `out`
+    ===== ========== ========== ======== ====
+    op    op_param   args       dests
+    ===== ========== ========== ======== ====
+    ``&`` ``None``   ``a1, a2`` ``out``  AND two wires together, put result
+                                         into ``out``
+    ``|`` ``None``   ``a1, a2`` ``out``  OR two wires together, put result into
+                                         ``out``
+    ``^`` ``None``   ``a1, a2`` ``out``  XOR two wires together, put result
+                                         into ``out``
+    ``n`` ``None``   ``a1, a2`` ``out``  NAND two wires together, put result
+                                         into ``out``
+    ``~`` ``None``   ``a1``     ``out``  invert one wire, put result into
+                                         ``out``
+    ``+`` ``None``   ``a1, a2`` ``out``  add ``a1`` and ``a2``, put result into
+                                         ``out``
 
-                                   ``len(out) == max(len(a1), len(a2)) + 1``
+                                         ``len(out) == max(len(a1), len(a2)) + 1``
 
-                                   works with both unsigned and two's complement
-    ``-`` `None`   `a1, a2` `out`  subtract `a2` from `a1`, put result into `out`
+                                         Performs *unsigned* addition. Use
+                                         :func:`.signed_add` for signed
+                                         addition.
+    ``-`` ``None``   ``a1, a2`` ``out``  subtract ``a2`` from ``a1``, put
+                                         result into ``out``
 
-                                   ``len(out) == max(len(a1), len(a2)) + 1``
+                                         ``len(out) == max(len(a1), len(a2)) + 1``
 
-                                   works with both unsigned and two's complement
-    ``*`` `None`   `a1, a2` `out`  multiply `a1` & `a2`, put result into `out`
+                                         Performs *unsigned* subtraction. Use
+                                         :func:`.signed_sub` for signed
+                                         subtraction.
+    ``*`` ``None``   ``a1, a2`` ``out``  multiply ``a1`` & ``a2``, put result
+                                         into ``out``
 
-                                   ``len(out) == len(a1) + len(a2)``
+                                         ``len(out) == len(a1) + len(a2)``
 
-                                   assumes unsigned, but :func:`.signed_mult` provides wrapper
-    ``=`` `None`   `a1, a2` `out`  check `a1` & `a2` equal, put result into `out` (0 | 1)
-    ``<`` `None`   `a1, a2` `out`  check `a2` greater than `a1`, put result into `out` (0 | 1)
-    ``>`` `None`   `a1, a2` `out`  check `a1` greater than `a2`, put result into `out` (0 | 1)
-    ``w`` `None`   `w1`     `w2`   connects `w1` to `w2`
+                                         Performs *unsigned* multiplication.
+                                         Use :func:`.signed_mult` for signed
+                                         multiplication.
+    ``=`` ``None``   ``a1, a2`` ``out``  check ``a1`` & ``a2`` equal, put
+                                         result into ``out`` (0 | 1)
+    ``<`` ``None``   ``a1, a2`` ``out``  check ``a1`` less than ``a2``, put
+                                         result into ``out``. ``out`` has
+                                         bitwidth 1.
 
-                                    directional wire with no logical operation
-    ``x`` `None`   `x`,     `out`  multiplexer:
+                                         Performs *unsigned* comparison. Use
+                                         :func:`.signed_lt` for signed less
+                                         than.
+    ``>`` ``None``   ``a1, a2`` ``out``  check ``a1`` greater than ``a2``, put
+                                         result into ``out`` ``out`` has
+                                         bitwidth 1.
 
-                                   when `x` == 0 connect `a1` to `out`
+                                         Performs *unsigned* comparison. Use
+                                         :func:`.signed_gt` for signed greater
+                                         than.
+    ``w`` ``None``   ``w1``     ``w2``   connects ``w1`` to ``w2``
 
-                                   when `x` == 1 connect `a2` to `out`
+                                         directional wire with no logical
+                                         operation
+    ``x`` ``None``   ``x``,     ``out``  multiplexer:
 
-                                   `x` must be one bit and ``len(a1) == len(a2)``
-                   `a1, a2`
-    ``c`` `None`   `\\*args` `out`  concatenates `\\*args` (wires) into single WireVector
+                                         when ``x`` == 0 connect ``a1`` to
+                                         ``out``
 
-                                    puts first arg at MSB, last arg at LSB
-    ``s`` `sel`    `wire`   `out`  selects bits from wire based on `sel` (slicing syntax)
+                                         when ``x`` == 1 connect ``a2`` to
+                                         ``out``
 
-                                    puts selected bits into `out`
-    ``r`` `None`   `next`   `r1`   on positive clock edge: copies `next` to `r1`
-    ``m`` `memid`, `addr`   `data` read address addr of mem (w/ id `memid`), put it into `data`
+                                         ``x`` must be one bit and ``len(a1) == len(a2)``
+                     ``a1, a2``
+    ``c`` ``None``   ``*args``  ``out``  concatenates ``*args`` (wires) into
+                                         single WireVector
 
-          `mem`
-    ``@`` `memid`, `addr`          write data to mem (w/ id `memid`) at address `addr`
+                                         puts first arg at MSB, last arg at LSB
+    ``s`` ``sel``    ``wire``   ``out``  selects bits from wire based on
+                                         ``sel`` (slicing syntax)
 
-                                   request write enable (`wr_en`)
+                                         puts selected bits into ``out``
+    ``r`` ``None``   ``next``   ``r1``   on positive clock edge: copies
+                                         ``next`` to ``r1``
+    ``m`` ``memid``, ``addr``   ``data`` read address addr of mem (with id
+                                         ``memid``), put it into ``data``
 
-          `mem`    `data`,
+          ``mem``
+    ``@`` ``memid``, ``addr``            write data to mem (with id ``memid``)
+                                         at address ``addr``
 
-                   `wr_en`
-    ===== ======== ======== ====== ====
+                                         request write enable (``wr_en``)
+
+          ``mem``    ``data``,
+
+                     ``wr_en``
+    ===== ========== ========== ======== ====
 
     """
 

@@ -89,11 +89,12 @@ Extended Logic and Arithmetic
 
 The functions below provide ways of comparing and arithmetically combining
 :class:`WireVectors<.WireVector>` in ways that are often useful in hardware
-design.  The functions below extend those member functions of the
-:class:`.WireVector` class itself (which provides support for addition,
-unsigned multiplication, unsigned comparison, and many others).
+design. The functions below extend those member functions of the
+:class:`.WireVector` class itself (which provides support for unsigned
+addition, subtraction, multiplication, comparison, and many others).
 
 .. autofunction:: pyrtl.corecircuits.signed_add
+.. autofunction:: pyrtl.corecircuits.signed_sub
 .. autofunction:: pyrtl.corecircuits.signed_mult
 .. autofunction:: pyrtl.corecircuits.signed_lt
 .. autofunction:: pyrtl.corecircuits.signed_le

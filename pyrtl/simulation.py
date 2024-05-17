@@ -15,7 +15,7 @@ from .core import working_block, PostSynthBlock, _PythonSanitizer, Block
 from .wire import Input, Register, Const, Output, WireVector
 from .memory import RomBlock, MemBlock
 from .helperfuncs import check_rtl_assertions, _currently_in_jupyter_notebook
-from .helperfuncs import val_to_signed_integer
+from .helperfuncs import val_to_signed_integer, infer_val_and_bitwidth
 from .importexport import _VerilogSanitizer
 
 try:
@@ -225,10 +225,16 @@ class Simulation(object):
                 raise PyrtlError(
                     'step provided a value for input for "%s" which is '
                     'not a known input ' % name)
-            if not isinstance(provided_inputs[i], numbers.Integral) or provided_inputs[i] < 0:
+            if not isinstance(provided_inputs[i], numbers.Integral):
                 raise PyrtlError(
                     'step provided an input "%s" which is not a valid '
-                    'positive integer' % provided_inputs[i])
+                    'integer' % provided_inputs[i])
+            # If the input is negative, convert it to the appropriate two's
+            # complement representation for its bitwidth.
+            if provided_inputs[i] < 0:
+                provided_inputs[i] = infer_val_and_bitwidth(
+                    provided_inputs[i], bitwidth=sim_wire.bitwidth,
+                    signed=True).value
             if len(bin(provided_inputs[i])) - 2 > sim_wire.bitwidth:
                 raise PyrtlError(
                     'the bitwidth for "%s" is %d, but the provided input '
@@ -627,10 +633,19 @@ class FastSimulation(object):
         """
         # validate_inputs
         for wire, value in provided_inputs.items():
-            wire = self.block.get_wirevector_by_name(wire) if isinstance(wire, str) else wire
-            if value > wire.bitmask or value < 0:
-                raise PyrtlError("Wire {} has value {} which cannot be represented"
-                                 " using its bitwidth".format(wire, value))
+            wire = (self.block.get_wirevector_by_name(wire)
+                    if isinstance(wire, str) else wire)
+
+            # If the input is negative, convert it to the appropriate two's
+            # complement representation for its bitwidth.
+            if value < 0:
+                value = infer_val_and_bitwidth(
+                    value, bitwidth=wire.bitwidth, signed=True).value
+
+            if value > wire.bitmask:
+                raise PyrtlError(
+                    f'Wire {wire} has value {value} which cannot be '
+                    'represented using its bitwidth {wire.bitwidth}')
 
         # building the simulation data
         ins = {self._to_name(wire): value for wire, value in provided_inputs.items()}

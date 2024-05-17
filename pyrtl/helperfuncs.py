@@ -741,17 +741,22 @@ def _convert_int(val, bitwidth=None, signed=False):
         if bitwidth is None:
             bitwidth = min_bitwidth
         elif bitwidth < min_bitwidth:
-            raise PyrtlError('bitwidth specified is insufficient to represent constant')
+            raise PyrtlError(
+                f'bitwidth specified ({bitwidth}) is insufficient to '
+                f'represent constant {val}')
 
     else:  # val is negative
         if not signed and bitwidth is None:
-            raise PyrtlError('negative constants require either signed=True or specified bitwidth')
+            raise PyrtlError(
+                f'negative constant {val} requires either signed=True or '
+                'specified bitwidth')
 
         if bitwidth is None:
             bitwidth = 1 if val == -1 else len(bin(~val)) - 1
 
         if (val >> bitwidth - 1) != -1:
-            raise PyrtlError('insufficient bits for negative number')
+            raise PyrtlError(
+                f'insufficient bits ({bitwidth}) for negative number {val}')
 
         num = val & ((1 << bitwidth) - 1)  # result is a two's complement value
     return ValueBitwidthTuple(num, bitwidth)
