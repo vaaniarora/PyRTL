@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ctypes
 import subprocess
 import tempfile
@@ -7,7 +9,7 @@ import platform
 import sys
 import _ctypes
 
-from .core import working_block
+from .core import working_block, Block
 from .wire import Input, Output, Const, WireVector, Register
 from .memory import MemBlock, RomBlock
 from .pyrtlexceptions import PyrtlError, PyrtlInternalError
@@ -66,29 +68,25 @@ class CompiledSimulation(object):
     good effect.
 
     In order to use this, you need:
-
         - A 64-bit processor
         - GCC (tested on version 4.8.4)
         - A 64-bit build of Python
 
     If using the multiplication operand, only some architectures are supported:
-
         - x86-64 / amd64
         - arm64 / aarch64
         - mips64 (untested)
 
-    default_value is currently only implemented for registers, not memories.
+    ``default_value`` is currently only implemented for registers, not memories.
 
     A Simulation step works as follows:
 
     1. Registers are updated:
-
         1. (If this is the first step) With the default values passed in
            to the Simulation during instantiation and/or any reset values
            specified in the individual registers.
         2. (Otherwise) With their next values calculated in the previous step
            (``r`` logic nets).
-
     2. The new values of these registers as well as the values of block inputs
        are propagated through the combinational logic.
     3. Memory writes are performed (``@`` logic nets).
@@ -103,8 +101,10 @@ class CompiledSimulation(object):
     """
 
     def __init__(
-            self, tracer=True, register_value_map={}, memory_value_map={},
-            default_value=0, block=None):
+            self, tracer: SimulationTrace = True,
+            register_value_map: dict[Register, int] = {},
+            memory_value_map: dict[MemBlock, dict[int, int]] = {},
+            default_value: int = 0, block: Block = None):
         self._dll = self._dir = None
         self.block = working_block(block)
         self.block.sanity_check()
@@ -134,11 +134,11 @@ class CompiledSimulation(object):
         self._create_dll()
         self._initialize_mems()
 
-    def inspect_mem(self, mem):
+    def inspect_mem(self, mem: MemBlock) -> dict[int, int]:
         """Get a view into the contents of a MemBlock."""
         return DllMemInspector(self, mem)
 
-    def inspect(self, w):
+    def inspect(self, w: str) -> int:
         """Get the latest value of the wire given, if possible."""
         if isinstance(w, WireVector):
             w = w.name
@@ -152,7 +152,7 @@ class CompiledSimulation(object):
             return vals[-1]
         raise PyrtlError('CompiledSimulation does not support inspecting internal WireVectors')
 
-    def step(self, inputs):
+    def step(self, inputs: dict[str, int]):
         """Run one step of the simulation.
 
         :param inputs: A mapping from input names to the values for the step.
@@ -169,8 +169,10 @@ class CompiledSimulation(object):
         """
         self.run([inputs])
 
-    def step_multiple(self, provided_inputs={}, expected_outputs={}, nsteps=None,
-                      file=sys.stdout, stop_after_first_error=False):
+    def step_multiple(self, provided_inputs: dict[str, list[int]] = {},
+                      expected_outputs: dict[str, int] = {},
+                      nsteps: int = None, file=sys.stdout,
+                      stop_after_first_error: bool = False):
         """Take the simulation forward N cycles, where N is the number of values
          for each provided input.
 
@@ -290,7 +292,7 @@ class CompiledSimulation(object):
                 file.write("{0:>5} {1:>10} {2:>8} {3:>8}\n".format(step, name, expected, actual))
             file.flush()
 
-    def run(self, inputs):
+    def run(self, inputs: list[dict[str, int]]):
         """ Run many steps of the simulation.
 
         :param inputs: A list of input mappings for each step;

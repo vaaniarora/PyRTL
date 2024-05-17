@@ -267,8 +267,8 @@ class Simulation(object):
         # raise the appropriate exceptions
         check_rtl_assertions(self)
 
-    def step_multiple(self, provided_inputs: dict[str, int] = {},
-                      expected_outputs: dict[str, int] = {},
+    def step_multiple(self, provided_inputs: dict[str, list[int]] = {},
+                      expected_outputs: dict[str, list[int]] = {},
                       nsteps: int = None,
                       file=sys.stdout, stop_after_first_error: bool = False):
         """Take the simulation forward N cycles, based on the number of values
@@ -529,7 +529,7 @@ class FastSimulation(object):
 
     def __init__(
             self, register_value_map: dict[Register, int] = {},
-            memory_value_map: dict = {},
+            memory_value_map: dict[MemBlock, dict[int, int]] = {},
             default_value: int = 0, tracer: SimulationTrace = True,
             block: Block = None, code_file=None):
         """Instantiates a Fast Simulation instance.
@@ -652,8 +652,8 @@ class FastSimulation(object):
         # check the rtl assertions
         check_rtl_assertions(self)
 
-    def step_multiple(self, provided_inputs: dict[str, int] = {},
-                      expected_outputs: dict[str, int] = {},
+    def step_multiple(self, provided_inputs: dict[str, list[int]] = {},
+                      expected_outputs: dict[str, list[int]] = {},
                       nsteps: int = None, file=sys.stdout,
                       stop_after_first_error: bool = False):
         """Take the simulation forward N cycles, where N is the number of
