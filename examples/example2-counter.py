@@ -80,7 +80,3 @@ for cycle in range(15):
     sim.step({})
     assert sim.value[counter] == cycle % 8
 sim_trace.render_trace()
-
-# All done.
-
-exit(0)

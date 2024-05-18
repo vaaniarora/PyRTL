@@ -89,9 +89,8 @@ sim.tracer.render_trace(repr_func=pyrtl.val_to_signed_integer)
 # Manually sign-extend inputs to correctly add signed integers with `+`.
 # ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
 # Instead of using `signed_add`, we can manually sign-extend the inputs and
-# truncate the output to correctly add signed integers with `+`.
-#
-# Use this trick to implement other signed arithmetic operations.
+# truncate the output to correctly add signed integers with `+`. Use this trick
+# to implement other signed arithmetic operations.
 pyrtl.reset_working_block()
 
 a = pyrtl.Input(bitwidth=2, name='a')
@@ -100,8 +99,8 @@ b = pyrtl.Input(bitwidth=2, name='b')
 # Using `+` produces the correct result for signed addition here because we
 # manually extend `a` and `b` to 3 bits. The result of `a.sign_extended(3) +
 # b.sign_extended(3)` is now 4 bits, but we truncate it to 3 bits. This
-# truncation is important! The addition's full 4 bit result would not be
-# correct.
+# truncation is subtle, but important! The addition's full 4 bit result would
+# not be correct.
 sign_extended_sum = pyrtl.Output(bitwidth=3, name='sign_extended_sum')
 extended_a = a.sign_extended(bitwidth=3)
 extended_b = b.sign_extended(bitwidth=3)
@@ -117,5 +116,6 @@ sim.step_multiple(provided_inputs=signed_inputs)
 
 print('\nInstead of using `signed_add`, we can also manually sign extend the '
       'inputs to\ncorrectly add signed integers with `+`.\n'
-      'sign_extended_sum == a.sign_extended(3) + b.sign_extended(3)')
+      'sign_extended_sum == (a.sign_extended(3) + b.sign_extended(3))'
+      '.truncate(3)')
 sim.tracer.render_trace(repr_func=pyrtl.val_to_signed_integer)

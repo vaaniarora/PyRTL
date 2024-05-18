@@ -305,7 +305,7 @@ class WireVector(object):
     def __add__(self, other):
         """Adds two wires together into a single WireVector.
 
-        Addition is *unsigned*.
+        Addition is *unsigned*. Use :func:`.signed_add` for signed addition.
 
         :rtype: WireVector
         :return: Returns the result wire of the operation. The resulting wire
@@ -330,7 +330,8 @@ class WireVector(object):
     def __sub__(self, other):
         """Subtracts the right wire from the left one.
 
-        Subtraction is *unsigned*.
+        Subtraction is *unsigned*. Use :func:`.signed_sub` for signed
+        subtraction.
 
         :rtype: WireVector
         :return: Returns the result wire of the operation. The resulting wire
@@ -350,7 +351,8 @@ class WireVector(object):
     def __mul__(self, other):
         """Multiplies two WireVectors.
 
-        Multiplication is *unsigned*.
+        Multiplication is *unsigned*. Use :func:`.signed_mult` for signed
+        multiplication.
 
         :rtype: WireVector
         :return: Returns the result wire of the operation. The resulting wire's
@@ -368,7 +370,8 @@ class WireVector(object):
     def __lt__(self, other):
         """Calculates whether a wire is less than another.
 
-        The comparison is *unsigned*.
+        The comparison is *unsigned*. Use :func:`.signed_lt` for a signed
+        comparison.
 
         :rtype: WireVector
         :return: a one bit result wire of the operation
@@ -379,7 +382,8 @@ class WireVector(object):
     def __le__(self, other):
         """Calculates whether a wire is less than or equal to another.
 
-        The comparison is *unsigned*.
+        The comparison is *unsigned*. Use :func:`.signed_le` for a signed
+        comparison.
 
         :rtype: WireVector
         :return: a one bit result wire of the operation
@@ -408,7 +412,8 @@ class WireVector(object):
     def __gt__(self, other):
         """Calculates whether a wire is greater than another.
 
-        The comparison is *unsigned*.
+        The comparison is *unsigned*. Use :func:`.signed_gt` for a signed
+        comparison.
 
         :rtype: WireVector
         :return: a one bit result wire of the operation
@@ -419,7 +424,8 @@ class WireVector(object):
     def __ge__(self, other):
         """Calculates whether a wire is greater than or equal to another.
 
-        The comparison is *unsigned*.
+        The comparison is *unsigned*. Use :func:`.signed_ge` for a signed
+        comparison.
 
         :rtype: WireVector
         :return: a one bit result wire of the operation
