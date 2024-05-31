@@ -185,7 +185,7 @@ class Simulation(object):
                 self.default_value, self.regvalue.copy(),
                 copy.deepcopy(self.memvalue))
 
-    def step(self, provided_inputs: dict[str, int]):
+    def step(self, provided_inputs: dict[str, int] = {}):
         """Take the simulation forward one cycle.
 
         :param provided_inputs: a dictionary mapping WireVectors to their
@@ -229,18 +229,8 @@ class Simulation(object):
                 raise PyrtlError(
                     'step provided an input "%s" which is not a valid '
                     'integer' % provided_inputs[i])
-            # If the input is negative, convert it to the appropriate two's
-            # complement representation for its bitwidth.
-            if provided_inputs[i] < 0:
-                provided_inputs[i] = infer_val_and_bitwidth(
-                    provided_inputs[i], bitwidth=sim_wire.bitwidth,
-                    signed=True).value
-            if len(bin(provided_inputs[i])) - 2 > sim_wire.bitwidth:
-                raise PyrtlError(
-                    'the bitwidth for "%s" is %d, but the provided input '
-                    '%d requires %d bits to represent'
-                    % (name, sim_wire.bitwidth,
-                       provided_inputs[i], len(bin(provided_inputs[i])) - 2))
+            provided_inputs[i] = infer_val_and_bitwidth(
+                provided_inputs[i], bitwidth=sim_wire.bitwidth).value
 
             self.value[sim_wire] = provided_inputs[i]
             supplied_inputs.add(sim_wire)
@@ -260,7 +250,6 @@ class Simulation(object):
             self._mem_update(net)
 
         # at the end of the step, record the values to the trace
-        # print self.value # Helpful Debug Print
         if self.tracer is not None:
             self.tracer.add_step(self.value)
 
@@ -614,7 +603,7 @@ class FastSimulation(object):
                 else:
                     self.mems[self._mem_varname(mem)] = {}
 
-    def step(self, provided_inputs: dict[str, int]):
+    def step(self, provided_inputs: dict[str, int] = {}):
         """ Run the simulation for a cycle.
 
         :param provided_inputs: a dictionary mapping WireVectors (or their
@@ -631,36 +620,27 @@ class FastSimulation(object):
         4. The :attr:`~.Register.next` values of the registers are saved for
            use in step 1 of the next cycle.
         """
-        # validate_inputs
+        # Validate and collect simulation inputs.
+        inputs = {}
         for wire, value in provided_inputs.items():
             wire = (self.block.get_wirevector_by_name(wire)
                     if isinstance(wire, str) else wire)
+            value = infer_val_and_bitwidth(
+                value, bitwidth=wire.bitwidth).value
+            inputs[self._to_name(wire)] = value
 
-            # If the input is negative, convert it to the appropriate two's
-            # complement representation for its bitwidth.
-            if value < 0:
-                value = infer_val_and_bitwidth(
-                    value, bitwidth=wire.bitwidth, signed=True).value
-
-            if value > wire.bitmask:
-                raise PyrtlError(
-                    f'Wire {wire} has value {value} which cannot be '
-                    'represented using its bitwidth {wire.bitwidth}')
-
-        # building the simulation data
-        ins = {self._to_name(wire): value for wire, value in provided_inputs.items()}
-        ins.update(self.regs)
-        ins.update(self.mems)
+        inputs.update(self.regs)
+        inputs.update(self.mems)
 
         # propagate through logic
-        self.regs, self.outs, mem_writes = self.sim_func(ins)
+        self.regs, self.outs, mem_writes = self.sim_func(inputs)
 
         for mem, addr, value in mem_writes:
             self.mems[mem][addr] = value
 
         # for tracer compatibility
         self.context = self.outs.copy()
-        self.context.update(ins)  # also gets old register values
+        self.context.update(inputs)  # also gets old register values
         if self.tracer is not None:
             self.tracer.add_fast_step(self)
 

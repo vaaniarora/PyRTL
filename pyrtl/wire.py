@@ -685,7 +685,7 @@ class Const(WireVector):
         Descriptions for all parameters not listed above can be found at
         :meth:`.WireVector.__init__`
 
-        For details of how constants are converted fron int, bool, and strings
+        For details of how constants are converted from int, bool, and strings
         (for Verilog constants), see documentation for the helper function
         :py:func:`.infer_val_and_bitwidth`. Please note that a constant
         generated with ``signed=True`` is still just a raw bitvector and all

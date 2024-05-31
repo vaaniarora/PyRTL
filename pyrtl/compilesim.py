@@ -14,6 +14,7 @@ from .wire import Input, Output, Const, WireVector, Register
 from .memory import MemBlock, RomBlock
 from .pyrtlexceptions import PyrtlError, PyrtlInternalError
 from .simulation import SimulationTrace, _trace_sort_key
+from .helperfuncs import infer_val_and_bitwidth
 
 try:
     from collections.abc import Mapping
@@ -152,10 +153,11 @@ class CompiledSimulation(object):
             return vals[-1]
         raise PyrtlError('CompiledSimulation does not support inspecting internal WireVectors')
 
-    def step(self, inputs: dict[str, int]):
+    def step(self, provided_inputs: dict[str, int] = {}, inputs=None):
         """Run one step of the simulation.
 
-        :param inputs: A mapping from input names to the values for the step.
+        :param provided_inputs: A mapping from input names to the values for
+            the step.
 
         A step causes the block to be updated as follows, in order:
 
@@ -166,8 +168,15 @@ class CompiledSimulation(object):
         3. Memories are updated
         4. The :attr:`~.Register.next` values of the registers are saved for
            use in step 1 of the next cycle.
+
         """
-        self.run([inputs])
+        if inputs is not None:
+            import warnings
+            warnings.warn(
+                'CompiledSimulation.step: `inputs` was renamed to '
+                '`provided_inputs`', DeprecationWarning)
+            provided_inputs = inputs
+        self.run([provided_inputs])
 
     def step_multiple(self, provided_inputs: dict[str, list[int]] = {},
                       expected_outputs: dict[str, int] = {},
@@ -317,6 +326,8 @@ class CompiledSimulation(object):
                 start, count = self._inputpos[name]
                 start += n * self._ibufsz
                 val = inmap[w]
+                val = infer_val_and_bitwidth(
+                    val, bitwidth=self._inputbw[name]).value
                 if val >= 1 << self._inputbw[name]:
                     raise PyrtlError(
                         'Wire {} has value {} which cannot be represented '

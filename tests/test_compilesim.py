@@ -28,7 +28,7 @@ class TraceWithBasicOpsBase(unittest.TestCase):
         sim_trace = pyrtl.SimulationTrace(wires_to_track=wtt)
         sim = self.sim(tracer=sim_trace)
         for i in range(8):
-            sim.step({})
+            sim.step()
         output = io.StringIO()
         sim_trace.print_trace(output, compact=True)
         self.assertEqual(output.getvalue(), correct_string)
@@ -531,7 +531,7 @@ class TraceWithAdderBase(unittest.TestCase):
 
         # step through 15 cycles
         for i in range(15):
-            sim.step({})
+            sim.step()
 
         output = io.StringIO()
         sim_trace.print_trace(output, compact=True)
@@ -614,7 +614,7 @@ b110 o
 
         # step through 15 cycles
         for i in range(15):
-            sim.step({})
+            sim.step()
 
         test_output = io.StringIO()
         sim_trace.print_vcd(test_output)

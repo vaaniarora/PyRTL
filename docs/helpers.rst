@@ -63,6 +63,8 @@ reasoning about bit vector representations of human understandable values.
 .. autofunction:: pyrtl.helperfuncs.val_to_signed_integer
 .. autofunction:: pyrtl.helperfuncs.val_to_formatted_str
 .. autofunction:: pyrtl.helperfuncs.formatted_str_to_val
+.. autoclass:: pyrtl.helperfuncs.ValueBitwidthTuple
+   :members: value, bitwidth
 .. autofunction:: pyrtl.helperfuncs.infer_val_and_bitwidth
 .. autofunction:: pyrtl.helperfuncs.log2
 

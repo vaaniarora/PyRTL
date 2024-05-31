@@ -24,7 +24,7 @@ class TraceWithBasicOpsBase(unittest.TestCase):
     def check_trace(self, correct_string):
         sim = self.sim()
         for i in range(8):
-            sim.step({})
+            sim.step()
         output = io.StringIO()
         sim.tracer.print_trace(output, compact=True)
         self.assertEqual(output.getvalue(), correct_string)
@@ -874,7 +874,7 @@ class TraceWithAdderBase(unittest.TestCase):
 
         # step through 15 cycles
         for i in range(15):
-            sim.step({})
+            sim.step()
 
         output = io.StringIO()
         sim.tracer.print_trace(output, compact=True)
@@ -955,7 +955,7 @@ b110 r
 
         # step through 15 cycles
         for i in range(15):
-            sim.step({})
+            sim.step()
 
         test_output = io.StringIO()
         sim.tracer.print_vcd(test_output)
@@ -1376,7 +1376,7 @@ class NoTracerBase(unittest.TestCase):
         c = pyrtl.Output(name='c', bitwidth=3)
         c <<= a + b
         sim = self.sim(tracer=None)
-        sim.step({})
+        sim.step()
         actual_c = sim.inspect('c')
         self.assertEqual(expected_c, actual_c)
 

@@ -77,6 +77,6 @@ counter.next <<= sum
 sim_trace = pyrtl.SimulationTrace()
 sim = pyrtl.Simulation(tracer=sim_trace)
 for cycle in range(15):
-    sim.step({})
+    sim.step()
     assert sim.value[counter] == cycle % 8
 sim_trace.render_trace()
