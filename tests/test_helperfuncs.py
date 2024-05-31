@@ -1549,9 +1549,13 @@ class TestWireStruct(unittest.TestCase):
 BitPair = pyrtl.wire_matrix(component_schema=1, size=2)
 
 
-# Word is an array of two Bytes. This checks that a @wire_struct (Byte) can be a
-# component of a wire_matrix (Word).
+# Word is an array of two Bytes. This checks that a @wire_struct (Byte) can be
+# a component of a wire_matrix (Word).
 Word = pyrtl.wire_matrix(component_schema=Byte, size=2)
+
+
+# ByteMatrix tests the corner case of a single-element wire_matrix.
+ByteMatrix = pyrtl.wire_matrix(component_schema=Byte, size=1)
 
 
 # DWord is an array of two Words, or effectively a 2x2 array of Bytes. This
@@ -1726,6 +1730,46 @@ class TestWireMatrix(unittest.TestCase):
         self.assertEqual(sim.inspect('cached_data.data[1]'), 0xCD)
         self.assertEqual(sim.inspect('cached_data.data[1].high'), 0xC)
         self.assertEqual(sim.inspect('cached_data.data[1].low'), 0xD)
+
+    def test_byte_matrix_const(self):
+        byte_matrix = ByteMatrix(name='byte_matrix', values=[0xAB])
+        self.assertEqual(len(byte_matrix), 1)
+        self.assertEqual(byte_matrix.bitwidth, 8)
+        self.assertEqual(len(pyrtl.as_wires(byte_matrix)), 8)
+
+        # Constants are sliced immediately.
+        self.assertEqual(byte_matrix.val, 0xAB)
+        self.assertEqual(byte_matrix[0].val, 0xAB)
+        self.assertEqual(byte_matrix[0].high.val, 0xA)
+        self.assertEqual(byte_matrix[0].low.val, 0xB)
+
+    def test_byte_matrix_input_slice(self):
+        byte_matrix = ByteMatrix(name='byte_matrix',
+                                 component_type=pyrtl.Input)
+
+        self.assertTrue(isinstance(pyrtl.as_wires(byte_matrix[0]),
+                                   pyrtl.Input))
+
+        sim = pyrtl.Simulation()
+        sim.step(provided_inputs={'byte_matrix[0]': 0xAB})
+        self.assertEqual(sim.inspect('byte_matrix'), 0xAB)
+        self.assertEqual(sim.inspect('byte_matrix[0]'), 0xAB)
+        self.assertEqual(sim.inspect('byte_matrix[0].high'), 0xA)
+        self.assertEqual(sim.inspect('byte_matrix[0].low'), 0xB)
+
+    def test_byte_matrix_input_concatenate(self):
+        byte_matrix = ByteMatrix(name='byte_matrix',
+                                 concatenated_type=pyrtl.Input)
+
+        self.assertTrue(isinstance(pyrtl.as_wires(byte_matrix),
+                                   pyrtl.Input))
+
+        sim = pyrtl.Simulation()
+        sim.step(provided_inputs={'byte_matrix': 0xAB})
+        self.assertEqual(sim.inspect('byte_matrix'), 0xAB)
+        self.assertEqual(sim.inspect('byte_matrix[0]'), 0xAB)
+        self.assertEqual(sim.inspect('byte_matrix[0].high'), 0xA)
+        self.assertEqual(sim.inspect('byte_matrix[0].low'), 0xB)
 
 
 if __name__ == "__main__":

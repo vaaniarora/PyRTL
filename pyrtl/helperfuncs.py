@@ -1630,14 +1630,35 @@ def wire_matrix(component_schema, size: int):
                     name=component_name, bitwidth=self._component_bitwidth,
                     type=component_schema))
 
+            # By default, slice the concatenated value into components iff
+            # exactly one value is provided.
+            slicing = len(values) == 1
+
             # Handle Input and Register special cases.
             if concatenated_type is Input or concatenated_type is Register:
+                # Slice the concatenated value. Override the default 'slicing'
+                # because 'values' is empty when slicing a concatenated Input
+                # or Register.
+                #
+                # Note that we can't just check len(values) == 1 after we set
+                # values to [None] because that doesn't work when there is only
+                # one element in the wire_matrix. We must distinguish between:
+                #
+                # 1. Slicing values to produce values[0] (this case).
+                # 2. Concatenating values[0] to produce values (next case).
+                #
+                # But len(values) == 1 in both cases. The slice in (1) and
+                # concatenate in (2) are both no-ops, but we have to get the
+                # direction right. In the first case, values[0] is driven by
+                # values, and in the second case, values is driven by
+                # values[0].
+                slicing = True
                 values = [None]
             elif component_type is Input or component_type is Register:
                 values = [None for _ in range(self._size)]
 
             self._components = [None for i in range(len(schema))]
-            if len(values) == 1:
+            if slicing:
                 # Concatenated value was provided. Slice it into components.
                 _slice(block=block, schema=schema, bitwidth=self._bitwidth,
                        component_type=component_type, name=name,
