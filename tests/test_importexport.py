@@ -1676,6 +1676,16 @@ class TestVerilogOutput(unittest.TestCase):
         pyrtl.output_to_verilog(buffer, add_reset=False)
         self.assertEqual(buffer.getvalue(), verilog_custom_reset)
 
+    def test_register_reset_value(self):
+        reg0 = pyrtl.Register(name='register0', bitwidth=8, reset_value=0)
+        reg1 = pyrtl.Register(name='register1', bitwidth=4, reset_value=1)
+
+        buffer = io.StringIO()
+        pyrtl.output_to_verilog(buffer, add_reset=False, initialize_registers=True)
+
+        self.assertTrue("reg[7:0] register0 = 8'd0" in buffer.getvalue())
+        self.assertTrue("reg[3:0] register1 = 4'd1" in buffer.getvalue())
+
 
 verilog_input_counter = """\
 module counter (clk, rst, en, count);
@@ -1872,7 +1882,6 @@ module tb();
     reg clk;
     reg rst;
 
-    integer tb_iter;
     toplevel block(.clk(clk), .rst(rst));
 
     always

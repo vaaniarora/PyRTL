@@ -15,7 +15,7 @@ The main Sphinx configuration file is
 
 Most of PyRTL's documentation is automatically extracted from Python
 docstrings, see [docstring
-formating](https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#signatures)
+formating](https://www.sphinx-doc.org/en/master/usage/domains/python.html)
 for supported directives and fields. Sphinx parses [Python type
 annotations](https://docs.python.org/3/library/typing.html), so put type
 information into annotations instead of docstrings.

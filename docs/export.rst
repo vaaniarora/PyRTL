@@ -17,6 +17,7 @@ Importing Verilog
 -----------------
 
 .. autofunction:: pyrtl.importexport.input_from_blif
+.. autofunction:: pyrtl.importexport.input_from_verilog
 
 Outputting for Visualization
 ----------------------------
