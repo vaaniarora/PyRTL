@@ -465,7 +465,7 @@ def synthesize(update_working_block=True, merge_io_vectors=True, block=None):
 
     :param bool update_working_block: Boolean specifying if working block
         should be set to the newly synthesized block.
-    :param bool merge_io_wirevectors: if False, turn all N-bit IO wirevectors
+    :param bool merge_io_vectors: if False, turn all N-bit IO wirevectors
         into N 1-bit IO wirevectors (i.e. don't maintain interface).
     :param Block block: The block you want to synthesize.
     :return: The newly synthesized block (of type :py:class:`.PostSynthBlock`).
