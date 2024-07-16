@@ -38,14 +38,14 @@ snowballstemmer==2.2.0
     # via sphinx
 soupsieve==2.5
     # via beautifulsoup4
-sphinx==7.3.7
+sphinx==7.4.4
     # via
     #   -r requirements.in
     #   furo
     #   sphinx-autodoc-typehints
     #   sphinx-basic-ng
     #   sphinx-copybutton
-sphinx-autodoc-typehints==2.1.1
+sphinx-autodoc-typehints==2.2.2
     # via -r requirements.in
 sphinx-basic-ng==1.0.0b2
     # via furo
