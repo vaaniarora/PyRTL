@@ -1,4 +1,4 @@
-# See PyRTL's release documentation in release/README.md
+# See PyRTL's release documentation in docs/release/README.md
 #
 # This file configures PyRTL's distribution archives, which are built and
 # uploaded to PyPI with GitHub actions.
