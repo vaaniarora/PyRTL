@@ -142,7 +142,7 @@ and nothing more.
 * PyRTL's Sphinx build process is documented in
   [`docs/README.md`](https://github.com/UCSBarchlab/PyRTL/blob/development/docs/README.md).
 * PyRTL's release process is documented in
-  [`release/README.md`](https://github.com/UCSBarchlab/PyRTL/blob/development/release/README.md).
+  [`docs/release/README.md`](https://github.com/UCSBarchlab/PyRTL/blob/development/docs/release/README.md).
 
 ### Using PyRTL
 
