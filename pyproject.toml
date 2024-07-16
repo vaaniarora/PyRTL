@@ -48,6 +48,7 @@ svg = ["graphviz"]
 Homepage = "http://ucsbarchlab.github.io/PyRTL/"
 GitHub = "https://github.com/UCSBarchlab/PyRTL"
 Documentation = "https://pyrtl.readthedocs.io/"
+Changelog = "https://github.com/UCSBarchlab/PyRTL/blob/development/CHANGELOG.md"
 
 [tool.hatch.version]
 source = "vcs"
