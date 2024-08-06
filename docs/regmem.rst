@@ -22,7 +22,7 @@ Memories
 
 .. autoclass:: pyrtl.memory.MemBlock
     :members:
-    :special-members: __init__
+    :special-members: __init__, __getitem__, __setitem__
 
 ROMs
 ----
@@ -30,4 +30,4 @@ ROMs
 .. autoclass:: pyrtl.memory.RomBlock
     :members:
     :show-inheritance:
-    :special-members: __init__
+    :special-members: __init__, __getitem__

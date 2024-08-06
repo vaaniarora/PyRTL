@@ -328,10 +328,6 @@ class CompiledSimulation(object):
                 val = inmap[w]
                 val = infer_val_and_bitwidth(
                     val, bitwidth=self._inputbw[name]).value
-                if val >= 1 << self._inputbw[name]:
-                    raise PyrtlError(
-                        'Wire {} has value {} which cannot be represented '
-                        'using its bitwidth'.format(name, val))
                 # pack input
                 for pos in range(start, start + count):
                     ibuf[pos] = val & ((1 << 64) - 1)

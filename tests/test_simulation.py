@@ -1300,6 +1300,42 @@ class RomBlockSimBase(unittest.TestCase):
             sim = self.sim(memory_value_map=mem_val_map)
 
 
+class MemBlockSimBase(unittest.TestCase):
+    def setUp(self):
+        pyrtl.reset_working_block()
+
+    def test_negative_memory_value_map(self):
+        mem = pyrtl.MemBlock(addrwidth=3, bitwidth=3)
+        counter = pyrtl.Register(bitwidth=mem.addrwidth)
+        counter.next <<= counter + 1
+        read_data = mem[counter]
+        read_data.name = "read_data"
+        memory_values = [-4, -3, -2, -1, 0, 1, 2, 3]
+        memory_value_map = {index: value for index, value in enumerate(memory_values)}
+        sim = self.sim(memory_value_map={mem: memory_value_map})
+        for i in range(2 ** mem.addrwidth):
+            sim.step()
+            actual_read_data = pyrtl.val_to_signed_integer(sim.inspect("read_data"),
+                                                           bitwidth=mem.bitwidth)
+            self.assertEqual(actual_read_data, memory_value_map[i])
+
+    def test_simultaneous_read_write(self):
+        """Simultaneously read and write address 0.
+
+        The read returns the stored value, not the newly written value.
+
+        """
+        mem = pyrtl.MemBlock(addrwidth=1, bitwidth=1)
+        read_data = pyrtl.Output(name="read_data", bitwidth=mem.bitwidth)
+        read_data <<= mem[0]
+        mem[0] <<= 1
+        sim = self.sim()
+        sim.step()
+        self.assertEqual(sim.inspect("read_data"), 0)
+        sim.step()
+        self.assertEqual(sim.inspect("read_data"), 1)
+
+
 class InspectBase(unittest.TestCase):
     """
     Unittests for both sim.inspect and sim.inspectmem

@@ -163,13 +163,12 @@ class Simulation(object):
                 mem = self.block.mem_map[mem]  # pylint: disable=maybe-no-member
             self.memvalue[mem.id] = mem_map
             max_addr_val, max_bit_val = 2**mem.addrwidth, 2**mem.bitwidth
+            mem_map = {addr: infer_val_and_bitwidth(val, bitwidth=mem.bitwidth).value
+                       for addr, val in mem_map.items()}
             for (addr, val) in mem_map.items():
                 if addr < 0 or addr >= max_addr_val:
                     raise PyrtlError('error, address %s in %s outside of bounds' %
                                      (str(addr), mem.name))
-                if val < 0 or val >= max_bit_val:
-                    raise PyrtlError('error, %s at %s in %s outside of bounds' %
-                                     (str(val), str(addr), mem.name))
 
         # set all other variables to default value
         for w in self.block.wirevector_set:

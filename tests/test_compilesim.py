@@ -976,10 +976,6 @@ class RomBlockSimBase(unittest.TestCase):
         sim_trace = pyrtl.SimulationTrace()
         with self.assertRaises(pyrtl.PyrtlError) as ex:
             self.sim(tracer=sim_trace)
-        self.assertEqual(
-            str(ex.exception),
-            "RomBlock index is invalid, consider using pad_with_zeros=True for defaults"
-        )
 
     def test_rom_val_map(self):
         def rom_data_function(add):
@@ -997,6 +993,21 @@ class RomBlockSimBase(unittest.TestCase):
         self.sim_trace = pyrtl.SimulationTrace()
         with self.assertRaises(pyrtl.PyrtlError):
             sim = self.sim(tracer=self.sim_trace, memory_value_map=mem_val_map)
+
+    def test_negative_memory_value_map(self):
+        mem = pyrtl.MemBlock(addrwidth=3, bitwidth=3)
+        counter = pyrtl.Register(bitwidth=mem.addrwidth)
+        counter.next <<= counter + 1
+        read_data = pyrtl.Output(name="read_data")
+        read_data <<= mem[counter]
+        memory_values = [-4, -3, -2, -1, 0, 1, 2, 3]
+        memory_value_map = {index: value for index, value in enumerate(memory_values)}
+        sim = self.sim(memory_value_map={mem: memory_value_map})
+        for i in range(2 ** mem.addrwidth):
+            sim.step()
+            actual_read_data = pyrtl.val_to_signed_integer(sim.inspect("read_data"),
+                                                           bitwidth=mem.bitwidth)
+            self.assertEqual(actual_read_data, memory_value_map[i])
 
 
 class InspectBase(unittest.TestCase):
