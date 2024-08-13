@@ -1319,6 +1319,20 @@ class MemBlockSimBase(unittest.TestCase):
                                                            bitwidth=mem.bitwidth)
             self.assertEqual(actual_read_data, memory_value_map[i])
 
+    def test_unsigned_memory_value_map(self):
+        mem = pyrtl.MemBlock(addrwidth=3, bitwidth=3)
+        counter = pyrtl.Register(bitwidth=mem.addrwidth)
+        counter.next <<= counter + 1
+        read_data = mem[counter]
+        read_data.name = "read_data"
+        memory_values = [0, 1, 2, 3, 4, 5, 6, 7]
+        memory_value_map = {index: value for index, value in enumerate(memory_values)}
+        sim = self.sim(memory_value_map={mem: memory_value_map})
+        for i in range(2 ** mem.addrwidth):
+            sim.step()
+            actual_read_data = sim.inspect("read_data")
+            self.assertEqual(actual_read_data, memory_value_map[i])
+
     def test_simultaneous_read_write(self):
         """Simultaneously read and write address 0.
 

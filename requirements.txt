@@ -3,4 +3,5 @@ pylint
 pyparsing
 pytest
 pytest-cov
+pytest-xdist
 tox

@@ -399,6 +399,19 @@ class TestSignedRomBlockData(unittest.TestCase):
                                                            bitwidth=rom.bitwidth)
             self.assertEqual(actual_read_data, romdata[i])
 
+    def test_unsigned_romdata(self):
+        romdata = [0, 1, 2, 3, 4, 5, 6, 7]
+        rom = pyrtl.RomBlock(addrwidth=3, bitwidth=3, romdata=romdata)
+        counter = pyrtl.Register(bitwidth=rom.addrwidth)
+        counter.next <<= counter + 1
+        read_data = pyrtl.Output(name="read_data", bitwidth=rom.bitwidth)
+        read_data <<= rom[counter]
+        sim = pyrtl.Simulation()
+        for i in range(2 ** rom.addrwidth):
+            sim.step()
+            actual_read_data = sim.inspect("read_data")
+            self.assertEqual(actual_read_data, romdata[i])
+
 
 if __name__ == "__main__":
     unittest.main()
