@@ -10,7 +10,6 @@ import pyrtl.corecircuits
 import pyrtl.helperfuncs
 from pyrtl.rtllib import testingutils as utils
 
-
 # ---------------------------------------------------------------
 
 class TestWireVectorList(unittest.TestCase):
@@ -1770,6 +1769,57 @@ class TestWireMatrix(unittest.TestCase):
         self.assertEqual(sim.inspect('byte_matrix[0]'), 0xAB)
         self.assertEqual(sim.inspect('byte_matrix[0].high'), 0xA)
         self.assertEqual(sim.inspect('byte_matrix[0].low'), 0xB)
+
+class TestOneHotToBinary(unittest.TestCase):
+    
+    def test_simple_onehot(self):
+        
+        pyrtl.reset_working_block()
+        
+        o1 = pyrtl.WireVector(name='o1')
+        o1 <<= pyrtl.one_hot_to_binary(0b00000001)
+
+        o2 = pyrtl.WireVector(name='o2')
+        o2 <<= pyrtl.one_hot_to_binary(0b10000000)
+
+        o3 = pyrtl.WireVector(name='o3')
+        o3 <<= pyrtl.one_hot_to_binary(0b00100000)
+
+        o4 = pyrtl.WireVector(name='o4')
+        o4 <<= pyrtl.one_hot_to_binary(0b00010000)
+        
+        sim = pyrtl.Simulation()
+        sim.step({})
+        self.assertEqual(sim.inspect(o1), 0)
+        self.assertEqual(sim.inspect(o2), 7)
+        self.assertEqual(sim.inspect(o3), 5)
+        self.assertEqual(sim.inspect(o4), 4)
+
+    def test_multiple_ones(self):
+        
+        pyrtl.reset_working_block()
+
+        o5 = pyrtl.WireVector(name='o5')
+        o5 <<= pyrtl.one_hot_to_binary(0b00000101)
+
+        o6 = pyrtl.WireVector(name='o6')
+        o6 <<= pyrtl.one_hot_to_binary(0b11000000)
+
+        sim = pyrtl.Simulation()
+        sim.step({})
+        self.assertEqual(sim.inspect(o5), 0)
+        self.assertEqual(sim.inspect(o6), 6)
+
+    def test_no_ones(self):
+
+        pyrtl.reset_working_block()
+
+        o7 = pyrtl.WireVector(name='o7')
+        o7 <<= pyrtl.one_hot_to_binary(0b00000000)
+        
+        sim = pyrtl.Simulation()
+        sim.step({})
+        self.assertEqual(sim.inspect(o7), 0)
 
 
 if __name__ == "__main__":
