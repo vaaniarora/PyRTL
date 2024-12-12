@@ -40,6 +40,7 @@ from .helperfuncs import find_loop
 from .helperfuncs import find_and_print_loop
 from .helperfuncs import wire_struct
 from .helperfuncs import wire_matrix
+from .helperfuncs import one_hot_to_binary
 
 from .corecircuits import and_all_bits
 from .corecircuits import or_all_bits

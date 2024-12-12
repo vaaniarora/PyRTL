@@ -10,8 +10,8 @@ import pyrtl.corecircuits
 import pyrtl.helperfuncs
 from pyrtl.rtllib import testingutils as utils
 
-
 # ---------------------------------------------------------------
+
 
 class TestWireVectorList(unittest.TestCase):
     def setUp(self):
@@ -1770,6 +1770,48 @@ class TestWireMatrix(unittest.TestCase):
         self.assertEqual(sim.inspect('byte_matrix[0]'), 0xAB)
         self.assertEqual(sim.inspect('byte_matrix[0].high'), 0xA)
         self.assertEqual(sim.inspect('byte_matrix[0].low'), 0xB)
+
+
+class TestOneHotToBinary(unittest.TestCase):
+    def setUp(self):
+        pyrtl.reset_working_block()
+
+    def test_simple_onehot(self):
+        i = pyrtl.Input(bitwidth=8, name='i')
+        o = pyrtl.Output(bitwidth=3, name='o')
+        o <<= pyrtl.one_hot_to_binary(i)
+
+        sim = pyrtl.Simulation()
+        sim.step({i: 0b00000001})
+        self.assertEqual(sim.inspect('o'), 0)
+        sim.step({i: 0b10000000})
+        self.assertEqual(sim.inspect('o'), 7)
+        sim.step({i: 32})
+        self.assertEqual(sim.inspect('o'), 5)
+        sim.step({i: 16})
+        self.assertEqual(sim.inspect('o'), 4)
+
+    def test_multiple_ones(self):
+        i = pyrtl.Input(bitwidth=8, name='i')
+        o = pyrtl.Output(bitwidth=3, name='o')
+        o <<= pyrtl.one_hot_to_binary(i)
+
+        sim = pyrtl.Simulation()
+        sim.step({i: 0b00000101})
+        self.assertEqual(sim.inspect('o'), 0)
+        sim.step({i: 0b11000000})
+        self.assertEqual(sim.inspect('o'), 6)
+        sim.step({i: 0b10010010})
+        self.assertEqual(sim.inspect('o'), 1)
+
+    def test_no_ones(self):
+        i = pyrtl.Input(bitwidth=8, name='i')
+        o = pyrtl.Output(bitwidth=3, name='o')
+        o <<= pyrtl.one_hot_to_binary(i)
+
+        sim = pyrtl.Simulation()
+        sim.step({i: 0b00000000})
+        self.assertEqual(sim.inspect('o'), 0)
 
 
 if __name__ == "__main__":
