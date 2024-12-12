@@ -13,7 +13,7 @@ from typing import Union, NamedTuple
 from .core import working_block, _NameIndexer, _get_debug_mode, Block
 from .pyrtlexceptions import PyrtlError, PyrtlInternalError
 from .wire import WireVector, Input, Output, Const, Register, WrappedWireVector
-from .corecircuits import as_wires, rtl_all, rtl_any, concat, concat_list, mux, select
+from .corecircuits import as_wires, rtl_all, rtl_any, concat, concat_list, select
 
 # -----------------------------------------------------------------
 #        ___       __   ___  __   __
@@ -1684,26 +1684,33 @@ def wire_matrix(component_schema, size: int):
 
     return _WireMatrix
 
+
 def one_hot_to_binary(w) -> WireVector:
     '''Takes a one-hot input and returns the bit position of the high bit in binary.
 
     :param w: WireVector or a WireVector-like object or something that can be converted
-        into a Const (in accordance with the as_wires() required input).
+        into a Const (in accordance with the :py:func:`as_wires()` required input). Example
+        inputs: 0b0010, 64, 0b01.
     :return: The bit position of the high bit in binary as a WireVector.
 
     If the input contains multiple 1s, the bit position of the first 1 will
-        be returned. If the input contains no 1s, 0 will be returned. 
+        be returned. If the input contains no 1s, 0 will be returned.
+
+    Examples::
+
+        one_hot_to_binary(0b0010) # returns 1
+        one_hot_to_binary(64) # returns 6
+        one_hot_to_binary(0b1100) # returns 2, the bit position of the first 1
+        one_hot_to_binary(0) # returns 0
     '''
 
-    if not isinstance(w, WireVector):
-        w = as_wires(w)
+    w = as_wires(w)
 
-    n = len(w)
-    pos = 0
-    found = as_wires(0)
+    pos = 0  # Bit position of the first 1
+    already_found = as_wires(False)  # True if first 1 already found, False otherwise
 
-    for i in range(n):
-        pos = select(found | ~w[i], pos, i)
-        found = select(found, found, w[i])
+    for i in range(len(w)):
+        pos = select(w[i] & ~already_found, i, pos)
+        already_found = already_found | w[i]
 
     return pos
