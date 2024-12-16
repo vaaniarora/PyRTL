@@ -106,3 +106,9 @@ addition, subtraction, multiplication, comparison, and many others).
 .. autofunction:: pyrtl.corecircuits.shift_right_arithmetic
 .. autofunction:: pyrtl.corecircuits.shift_left_logical
 .. autofunction:: pyrtl.corecircuits.shift_right_logical
+
+Encoders and Decoders
+---------------------
+
+.. autofunction:: pyrtl.helperfuncs.one_hot_to_binary
+
