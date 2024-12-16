@@ -1693,8 +1693,8 @@ def one_hot_to_binary(w) -> WireVector:
         required input). Example inputs: ``0b0010``, ``64``, ``0b01``.
     :return: The bit position of the high bit in binary as a WireVector.
 
-    If the input contains multiple ``1``s, the bit position of the first ``1`` will be
-    returned. If the input contains no ``1``s, ``0`` will be returned.
+    If the input contains multiple ``1`` s, the bit position of the first ``1`` will be
+    returned. If the input contains no ``1`` s, ``0`` will be returned.
 
     Examples::
 
