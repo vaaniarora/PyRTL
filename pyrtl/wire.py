@@ -729,41 +729,96 @@ class Const(WireVector):
 
 
 class Register(WireVector):
-    """A WireVector with a register state element embedded.
+    """A WireVector with an embedded register state element.
 
-    Registers only update their outputs on posedge of an implicit clock signal.
-    The "value" in the current cycle can be accessed by just referencing the
-    Register itself. To set the value for the next cycle (after the next
-    posedge) you write to the property :attr:`~.Register.next` with the ``<<=``
-    operator. For example, if you want to specify a counter it would look like:
-    ``a.next <<= a + 1``
+    Registers only update their outputs on the rising edges of an implicit clock signal.
+    The "value" in the current cycle can be accessed by referencing the Register itself.
+    To set the value for the next cycle (after the next rising clock edge), set the
+    :attr:`.Register.next` property with the ``<<=`` operator.
+
+    Registers reset to zero by default, and reside in the same clock domain.
+
+    Example::
+
+        counter = pyrtl.Register(bitwidth=8)
+        counter.next <<= counter + 1
+
+    This builds a zero-initialized 8-bit counter. The second line sets the counter's
+    value in the next cycle (``counter.next``) to the counter's value in the current
+    cycle (``counter``), plus one.
 
     """
     _code = 'R'
 
-    # When the register is called as such:  r.next <<= foo
-    # the sequence of actions that happens is:
-    # 1) The property .next is called to get the "value" of r.next
-    # 2) The "value" is then passed to __ilshift__
+    # When a register's next value is assigned, the following occurs:
     #
-    # The resulting behavior should enforce the following:
-    # r.next <<= 5  -- good
-    # a <<= r       -- good
-    # r <<= 5       -- error
-    # a <<= r.next  -- error
-    # r.next = 5    -- error
-
+    # 1. The register's `.next` property is retrieved. Register.next returns an instance
+    #    of Register._Next.
+    # 2. __ilshift__ is invoked on the returned instance of Register._Next.
+    #
+    # So `reg.next <<= foo` effectively does the following:
+    #
+    #     reg.next = Register._Next(reg)
+    #     reg.next.__ilshift__(reg, foo)
+    #
+    # The following behavior is expected:
+    #
+    #     reg.next <<= 5  # good
+    #     a <<= reg       # good
+    #     reg <<= 5       # error
+    #     a <<= reg.next  # error
+    #     reg.next = 5    # error
     class _Next(object):
-        """ This is the type returned by "r.next". """
+        """Type returned by the ``Register.next`` property.
 
+        This class allows unconditional assignments (``<<=``, ``__ilshift__``) and
+        conditional assignments (``|=``, ``__ior__``) on ``Register.next``. Registers
+        themselves do not support assignments, so ``Register.__ilshift__`` and
+        ``Register.__ior__`` throw errors.
+
+        ``__ilshift__`` and ``__ior__`` must both return ``self`` because::
+
+            x <<= y
+
+        is equivalent to::
+
+            x = x.__ilshift__(y)
+
+        Note how ``__ilshift__``'s return value is assigned to ``x``, see
+        https://docs.python.org/3/library/operator.html#in-place-operators
+
+        ``__ilshift__`` and ``__ior__`` both return ``self`` and Register's @next.setter
+        checks that Register.next is assigned to an instance of _Next.
+
+        """
         def __init__(self, reg):
             self.reg = reg
 
         def __ilshift__(self, other):
-            return self.reg._next_ilshift(other)
+            from .corecircuits import as_wires
+            other = as_wires(other, bitwidth=self.reg.bitwidth)
+            if self.reg.bitwidth is None:
+                self.reg.bitwidth = other.bitwidth
+
+            if self.reg.reg_in is not None:
+                raise PyrtlError('error, .next value should be set once and only once')
+            self.reg._build(other)
+
+            return self
 
         def __ior__(self, other):
-            return self.reg._next_ior(other)
+            from .conditional import _build
+            from .corecircuits import as_wires
+            other = as_wires(other, bitwidth=self.reg.bitwidth)
+            if not self.reg.bitwidth:
+                raise PyrtlError('Conditional assignment only defined on '
+                                 'Registers with pre-defined bitwidths')
+
+            if self.reg.reg_in is not None:
+                raise PyrtlError('error, .next value should be set once and only once')
+            _build(self.reg, other)
+
+            return self
 
         def __bool__(self):
             """ Use of a _next in a statement like "a or b" is forbidden."""
@@ -774,23 +829,17 @@ class Register(WireVector):
 
         __nonzero__ = __bool__  # for Python 2 and 3 compatibility
 
-    class _NextSetter(object):
-        """ This is the type returned by __ilshift__ which r.next will be assigned. """
-
-        def __init__(self, rhs, is_conditional):
-            self.rhs = rhs
-            self.is_conditional = is_conditional
-
     def __init__(self, bitwidth: int, name: str = '', reset_value: int = None,
                  block: Block = None):
         """Construct a register.
 
         :param bitwidth: Number of bits to represent this register.
-        :param name: The name of the wire. Must be unique. If none is provided,
-            one will be autogenerated.
+        :param name: The name of the register's current value (``reg``, not
+            ``reg.next``). Must be unique. If none is provided, one will be
+            autogenerated.
         :param reset_value: Value to initialize this register to during
             simulation and in any code (e.g. Verilog) that is exported.
-            Defaults to 0, but can be explicitly overridden at simulation time.
+            Defaults to 0. Can be overridden at simulation time.
         :param block: The block under which the wire should be placed. Defaults
             to the working block.
 
@@ -812,10 +861,7 @@ class Register(WireVector):
 
     @property
     def next(self):
-        """
-        This property is the way to set what the WireVector will be the next
-        cycle (aka, it is before the D-Latch)
-        """
+        """Sets the Register's value for the next cycle (it is before the D-Latch)."""
         return Register._Next(self)
 
     def __ilshift__(self, other):
@@ -824,36 +870,15 @@ class Register(WireVector):
     def __ior__(self, other):
         raise PyrtlError('error, you cannot set registers directly, net .next instead')
 
-    def _next_ilshift(self, other):
-        from .corecircuits import as_wires
-        other = as_wires(other, bitwidth=self.bitwidth)
-        if self.bitwidth is None:
-            self.bitwidth = other.bitwidth
-        return Register._NextSetter(other, is_conditional=False)
-
-    def _next_ior(self, other):
-        from .corecircuits import as_wires
-        other = as_wires(other, bitwidth=self.bitwidth)
-        if not self.bitwidth:
-            raise PyrtlError('Conditional assignment only defined on '
-                             'Registers with pre-defined bitwidths')
-        return Register._NextSetter(other, is_conditional=True)
-
     @next.setter
-    def next(self, nextsetter):
-        from .conditional import _build
-        if not isinstance(nextsetter, Register._NextSetter):
+    def next(self, other):
+        if not isinstance(other, Register._Next):
             raise PyrtlError('error, .next should be set with "<<=" or "|=" operators')
-        elif self.reg_in is not None:
-            raise PyrtlError('error, .next value should be set once and only once')
-        elif nextsetter.is_conditional:
-            _build(self, nextsetter.rhs)
-        else:
-            self._build(nextsetter.rhs)
 
     def _build(self, next):
-        # this actually builds the register which might be from directly setting
-        # the property "next" or delayed when there is a conditional assignement
+        # Actually build the register. This happens immediately when setting the `next`
+        # property. Under conditional assignment, register build is delayed until the
+        # conditional assignment is _finalized.
         self.reg_in = next
         net = LogicNet('r', None, args=(self.reg_in,), dests=(self,))
         working_block().add_net(net)
@@ -888,13 +913,13 @@ class WrappedWireVector:
     def __setattr__(self, name, value):
         '''Forward all attribute assignments to the wrapped WireVector.
 
-        This is needed to make ``reg.next <<= foo`` work, because that
-        expands to::
+        This is needed to make ``reg.next <<= foo`` work, because that expands to::
 
             reg.next = reg.next.__ilshift__(foo)
 
-        And this attribute assignment must be forwarded to the underlying
-        Register.
+        See https://docs.python.org/3/library/operator.html#in-place-operators
+
+        This attribute assignment must be forwarded to the underlying Register.
 
         '''
         self.wire.__setattr__(name, value)
