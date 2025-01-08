@@ -132,6 +132,18 @@ class TraceWithBasicOpsBase(unittest.TestCase):
         self.o2 <<= self.r2
         self.check_trace(' o 00224466\no2 02244660\n')
 
+    def test_less_than_cmp_simulation(self):
+        left = self.r[0:-1]
+        right = pyrtl.Const(1, bitwidth=1)
+        self.r.next <<= left < right
+        self.check_trace('o 01010101\n')
+
+    def test_equals_simulation(self):
+        left = self.r[0:-1]
+        right = pyrtl.Const(0, bitwidth=1)
+        self.r.next <<= left == right
+        self.check_trace('o 01010101\n')
+
 
 class PrintTraceBase(unittest.TestCase):
     # note: doesn't include tests for compact=True because all the tests test that
@@ -902,13 +914,13 @@ class RomBlockSimBase(unittest.TestCase):
         sim_trace_a.print_trace(output, compact=True)
         self.assertEqual(output.getvalue(), expected_output)
 
-    def test_function_RomBlock(self):
+    def rom_block_test_helper(self, bitwidth):
 
         def rom_data_function(add):
             return int((add + 5) / 2)
 
         pyrtl.reset_working_block()
-        self.bitwidth = 4
+        self.bitwidth = bitwidth
         self.addrwidth = 4
         self.output1 = pyrtl.Output(self.bitwidth, "o1")
         self.output2 = pyrtl.Output(self.bitwidth, "o2")
@@ -931,13 +943,25 @@ class RomBlockSimBase(unittest.TestCase):
                                                  ("o2", lambda x: rom_data_function(2 * x))), 6)
         self.compareIO(self.sim_trace, exp_out)
 
-    def test_function_RomBlock_with_optimization(self):
+    def test_function_rom_block_bitwidth_4(self):
+        self.rom_block_test_helper(4)
+
+    def test_function_rom_block_bitwidth_12(self):
+        self.rom_block_test_helper(12)
+
+    def test_function_rom_block_bitwidth_32(self):
+        self.rom_block_test_helper(32)
+
+    def test_function_rom_block_bitwidth_64(self):
+        self.rom_block_test_helper(64)
+
+    def rom_block_with_optimization_helper(self, bitwidth):
 
         def rom_data_function(add):
             return int((add + 5) / 2)
 
         pyrtl.reset_working_block()
-        self.bitwidth = 4
+        self.bitwidth = bitwidth
         self.addrwidth = 4
         self.output1 = pyrtl.Output(self.bitwidth, "o1")
         self.output2 = pyrtl.Output(self.bitwidth, "o2")
@@ -966,6 +990,18 @@ class RomBlockSimBase(unittest.TestCase):
                                                  ("o2", lambda x: rom_data_function(2 * x))), 6)
         self.compareIO(self.sim_trace, exp_out)
 
+    def test_function_rom_block_with_optimization_bitwidth_4(self):
+        self.rom_block_with_optimization_helper(4)
+
+    def test_function_rom_block_with_optimization_bitwidth_12(self):
+        self.rom_block_with_optimization_helper(12)
+
+    def test_function_rom_block_with_optimization_bitwidth_32(self):
+        self.rom_block_with_optimization_helper(32)
+
+    def test_function_rom_block_with_optimization_bitwidth_64(self):
+        self.rom_block_with_optimization_helper(64)
+
     def test_rom_out_of_range_error(self):
         rom_data_array = [15, 13, 11, 9, 7, 5, 3]
         rom1 = pyrtl.RomBlock(bitwidth=4, addrwidth=3, romdata=rom_data_array)
@@ -976,6 +1012,19 @@ class RomBlockSimBase(unittest.TestCase):
         sim_trace = pyrtl.SimulationTrace()
         with self.assertRaises(pyrtl.PyrtlError) as ex:
             self.sim(tracer=sim_trace)
+
+    def test_rom_rom_block_in_memory_value_map_error(self):
+        rom_data_array = [6]
+        rom1 = pyrtl.RomBlock(bitwidth=4, addrwidth=1, romdata=rom_data_array)
+        rom_addr = pyrtl.Input(1, "rom_addr")
+        rom_out = pyrtl.Output(4, "rom_out")
+        rom_out <<= rom1[rom_addr]
+        mem_val_map = {rom1: {0: 0}}
+
+        sim_trace = pyrtl.SimulationTrace()
+        with self.assertRaises(pyrtl.PyrtlError) as error:
+            self.sim(tracer=sim_trace, memory_value_map=mem_val_map)
+        self.assertIn("memory_value_map", str(error.exception))
 
     def test_rom_val_map(self):
         def rom_data_function(add):
