@@ -12,7 +12,7 @@ beautifulsoup4==4.12.3
     # via furo
 certifi==2024.12.14
     # via requests
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
 docutils==0.21.2
     # via sphinx
@@ -22,13 +22,13 @@ idna==3.10
     # via requests
 imagesize==1.4.1
     # via sphinx
-jinja2==3.1.4
+jinja2==3.1.5
     # via sphinx
 markupsafe==3.0.2
     # via jinja2
 packaging==24.2
     # via sphinx
-pygments==2.18.0
+pygments==2.19.1
     # via
     #   furo
     #   sphinx
@@ -45,7 +45,7 @@ sphinx==8.1.3
     #   sphinx-autodoc-typehints
     #   sphinx-basic-ng
     #   sphinx-copybutton
-sphinx-autodoc-typehints==2.5.0
+sphinx-autodoc-typehints==3.0.0
     # via -r requirements.in
 sphinx-basic-ng==1.0.0b2
     # via furo
@@ -63,5 +63,5 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-urllib3==2.2.3
+urllib3==2.3.0
     # via requests
